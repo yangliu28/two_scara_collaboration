@@ -1,16 +1,5 @@
 <?xml version="1.0"?>
-<robot name="conveyor_belt">
-
-<!-- conveyor belt is just a long flat box for objects to slide on it -->
-
-<!-- world link -->
-<link name="world"/>
-
-<!-- base_link and its fixed joint -->
-<joint name="joint_fix" type="fixed">
-  <parent link="world"/>
-  <child link="base_link"/>
-</joint>
+<robot name="blue_box">
 
 <link name="base_link">
   <collision>

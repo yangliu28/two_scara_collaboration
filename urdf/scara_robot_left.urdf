@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
-<robot name="scara_robot">
+<robot name="scara_robot_left">
 
 <!-- simple two-axis scara robot -->
+
+<!-- this is the one at the LEFT side of the conveyor belt -->
+
 
 <!-- world link -->
 <link name="world"/>
@@ -50,16 +53,16 @@
 
 <link name="arm1">
   <collision>
-    <origin xyz="0.5 0 0.05" rpy="0 0 0"/>
+    <origin xyz="0 -0.5 0.05" rpy="0 0 0"/>
     <geometry>
-      <box size="1.1 0.1 0.1"/>
+      <box size="0.1 1.1 0.1"/>
     </geometry>
   </collision>
 
   <visual>
-    <origin xyz="0.5 0 0.05" rpy="0 0 0"/>
+    <origin xyz="0 -0.5 0.05" rpy="0 0 0"/>
     <geometry>
-      <box size="1.1 0.1 0.1"/>
+      <box size="0.1 1.1 0.1"/>
     </geometry>
   </visual>
 
@@ -83,23 +86,23 @@
 <joint name="rotation2" type="revolute">
   <parent link="arm1"/>
   <child link="arm2"/>
-  <origin xyz="1 0 0.1" rpy="0 0 0"/>
+  <origin xyz="0 -1 0.1" rpy="0 0 0"/>
   <axis xyz="0 0 1"/>
   <limit effort="100" velocity="100" lower="-3.13" upper="3.13"/>
 </joint>
 
 <link name="arm2">
   <collision>
-    <origin xyz="0.4 0 0.05" rpy="0 0 0"/>
+    <origin xyz="0 -0.4 0.05" rpy="0 0 0"/>
     <geometry>
-      <box size="0.9 0.1 0.1"/>
+      <box size="0.1 0.9 0.1"/>
     </geometry>
   </collision>
 
   <visual>
-    <origin xyz="0.4 0 0.05" rpy="0 0 0"/>
+    <origin xyz="0 -0.4 0.05" rpy="0 0 0"/>
     <geometry>
-      <box size="0.9 0.1 0.1"/>
+      <box size="0.1 0.9 0.1"/>
     </geometry>
   </visual>
 
@@ -122,7 +125,7 @@
 <joint name="gripper_stretch" type="prismatic">
   <parent link="arm2"/>
   <child link="gripper_link"/>
-  <origin xyz="0.8 0 0" rpy="0 0 0"/>
+  <origin xyz="0 -0.8 0" rpy="0 0 0"/>
   <axis xyz="0 0 1"/>
   <limit effort="100" velocity="100" lower="-0.05" upper="0.0"/>
 </joint>
@@ -163,21 +166,21 @@
 <joint name="finger1_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger1"/>
-  <origin xyz="0.03 0 -0.23" rpy="0 0 0"/>
-  <axis xyz="1 0 0"/>
-  <limit effort="100" velocity="100" lower="-0.01" upper="0.0"/>
+  <origin xyz="0 -0.03 -0.23" rpy="0 0 0"/>
+  <axis xyz="0 1 0"/>
+  <limit effort="100" velocity="100" lower="0.0" upper="0.01"/>
 </joint>
 
 <link name="finger1">
   <collision>
-    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
       <cylinder length="0.02" radius="0.005"/>
     </geometry>
   </collision>
 
   <visual>
-    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
       <cylinder length="0.02" radius="0.005"/>
     </geometry>
@@ -201,21 +204,21 @@
 <joint name="finger2_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger2"/>
-  <origin xyz="0 0.03 -0.23" rpy="0 0 0"/>
-  <axis xyz="0 1 0"/>
+  <origin xyz="0.03 0 -0.23" rpy="0 0 0"/>
+  <axis xyz="1 0 0"/>
   <limit effort="100" velocity="100" lower="-0.01" upper="0.0"/>
 </joint>
 
 <link name="finger2">
   <collision>
-    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
       <cylinder length="0.02" radius="0.005"/>
     </geometry>
   </collision>
 
   <visual>
-    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
       <cylinder length="0.02" radius="0.005"/>
     </geometry>
@@ -239,21 +242,21 @@
 <joint name="finger3_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger3"/>
-  <origin xyz="-0.03 0 -0.23" rpy="0 0 0"/>
-  <axis xyz="1 0 0"/>
-  <limit effort="100" velocity="100" lower="0.0" upper="0.01"/>
+  <origin xyz="0 0.03 -0.23" rpy="0 0 0"/>
+  <axis xyz="0 1 0"/>
+  <limit effort="100" velocity="100" lower="-0.01" upper="0.0"/>
 </joint>
 
 <link name="finger3">
   <collision>
-    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
       <cylinder length="0.02" radius="0.005"/>
     </geometry>
   </collision>
 
   <visual>
-    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
       <cylinder length="0.02" radius="0.005"/>
     </geometry>
@@ -277,21 +280,21 @@
 <joint name="finger4_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger4"/>
-  <origin xyz="0 -0.03 -0.23" rpy="0 0 0"/>
-  <axis xyz="0 1 0"/>
+  <origin xyz="-0.03 0 -0.23" rpy="0 0 0"/>
+  <axis xyz="1 0 0"/>
   <limit effort="100" velocity="100" lower="0.0" upper="0.01"/>
 </joint>
 
 <link name="finger4">
   <collision>
-    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
       <cylinder length="0.02" radius="0.005"/>
     </geometry>
   </collision>
 
   <visual>
-    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
       <cylinder length="0.02" radius="0.005"/>
     </geometry>

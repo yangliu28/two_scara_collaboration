@@ -8,8 +8,14 @@
     <arg name="use_sim_time" value="true"/>
   </include>
 
+  <!-- spawn the conveyor_belt in gazebo -->
+  <node name="spawn_conveyor_belt" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/conveyor_belt.urdf -urdf -model conveyor_belt" />
 
-  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/scara_robot.urdf -urdf -z 1 -model baxter" />
+  <!-- spawn the scara_robot in gazebo -->
+  <node name="spawn_scara_robot" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/scara_robot.urdf -urdf -y -1.5 -model scara_robot" />
+
+
+
 
 
 </launch>

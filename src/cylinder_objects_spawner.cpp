@@ -85,9 +85,53 @@ int main(int argc, char **argv) {
     apply_wrench_srv_msg.request.duration = 1000000;
 
     // begin spawn cylinder blocks and slide on conveyor
+    int i;  // index the cylinder blocks
     while (ros::ok()) {
-        
+        std::string index_string = intToString(i);
+        std::string model_name;
+
+        // prepare spawn model service message
+        spawn_model_srv_msg.request.initial_pose.position.y
+            = (float)rand()/(float)(RAND_MAX) - 0.5;  // random between -0.5 to 0.5
+        if ((rand() - RAND_MAX) > 0) {
+            // then choose red cylinder
+            model_name = "red_cylinder_" + index_string;  // initialize model_name
+            spawn_model_srv_msg.request.model_name = model_name;
+            spawn_model_srv_msg.request.robot_namespace = "red_cylinder_" + index_string;
+            spawn_model_srv_msg.request.model_xml = red_xmlStr;
+        }
+        else {
+            // then choose blue cylinder
+            model_name = "blue_cylinder_" + index_string;
+            spawn_model_srv_msg.request.model_name = model_name;  // initialize model_name
+            spawn_model_srv_msg.request.robot_namespace = "blue_cylinder_" + index_string;
+            spawn_model_srv_msg.request.model_xml = blue_xmlStr;
+        }
+        // call spawn model service
+        bool call_service = spawn_model_client.call(spawn_model_srv_msg);
+        if (call_service) {
+            if (spawn_model_srv_msg.response.success) {
+                ROS_INFO_STREAM(model_name << " has been spawned");
+                ROS_INFO_STREAM("");  // blank line
+            }
+            else {
+                ROS_INFO_STREAM(model_name << " spawn failed");
+                ROS_INFO_STREAM("");  // blank line
+            }
+        }
+        else {
+            ROS_ERROR("Fail to connect with gazebo server");
+            return 0;
+        }
+
+        // prepare apply body wrench service message
+        apply_wrench_srv_msg.request.
+
+
+
     }
+
+
 
 }
 

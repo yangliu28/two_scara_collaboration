@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
 
+  <!-- put file path of urdf model in parameter server -->
+  <!-- more details at launch file of swarm simulation -->
+  <param name="red_cylinder_path" type="str" value="/home/yang/ros_ws/src/two_scara_collaboration/urdf/red_cylinder.urdf"/>
+  <param name="blue_cylinder_path" type="str" value="/home/yang/ros_ws/src/two_scara_collaboration/urdf/blue_cylinder.urdf"/>
+
+  <!-- initialize gazebo with a world file -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find two_scara_collaboration)/launch/initialize.world"/>
     <arg name="gui" value="true" />

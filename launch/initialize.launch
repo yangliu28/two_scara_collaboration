@@ -12,10 +12,16 @@
   <node name="spawn_conveyor_belt" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/conveyor_belt.urdf -urdf -model conveyor_belt" />
 
   <!-- spawn the right scara robot in gazebo -->
-  <node name="spawn_scara_robot_right" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/scara_robot_right.urdf -urdf -y -1.5 -model scara_robot_right" />
+  <node name="spawn_scara_robot_right" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/scara_robot_right.urdf -urdf -model scara_robot_right
+    -y -1.5
+    -J scara_robot_right::rotation1 -0.08
+    -J scara_robot_right::rotation2 0.22" />
 
   <!-- spawn the left scara robot in gazebo -->
-  <node name="spawn_scara_robot_left" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/scara_robot_left.urdf -urdf -y 1.5 -model scara_robot_left" />
+<!--   <node name="spawn_scara_robot_left" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/scara_robot_left.urdf -urdf -model scara_robot_left
+    -y 1.5
+    -J scara_robot_right::rotation1 -0.08
+    -J scara_robot_right::rotation2 0.22" /> -->
 
 
 

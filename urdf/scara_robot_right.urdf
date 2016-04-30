@@ -7,6 +7,7 @@
 <!-- the robot will be fixed on the ground, not like the mobile swarm robot -->
 <!-- didn't find a good way to specify the orientation so that to duplicate model -->
 
+<!-- this file contains more comments than the left one -->
 
 <!-- world link -->
 <link name="world"/>
@@ -53,7 +54,7 @@
   <limit effort="100" velocity="100" lower="-1.5708" upper="1.5708"/>
 </joint>
 
-<link name="arm1">  <!-- ////////////////////// -->
+<link name="arm1">
   <collision>
     <origin xyz="0 0.5 0.05" rpy="0 0 0"/>
     <geometry>
@@ -88,12 +89,13 @@
 <joint name="rotation2" type="revolute">
   <parent link="arm1"/>
   <child link="arm2"/>
-  <origin xyz="0 1 0.1" rpy="0 0 0"/>  <!-- ////////////////////// -->
+  <origin xyz="0 1 0.1" rpy="0 0 0"/>
   <axis xyz="0 0 1"/>
-  <limit effort="100" velocity="100" lower="-3.13" upper="3.13"/>
+  <limit effort="100" velocity="100" lower="-3.00" upper="3.00"/>
+  <!-- if set to -pi to pi, robot will self collide -->
 </joint>
 
-<link name="arm2">  <!-- ////////////////////// -->
+<link name="arm2">
   <collision>
     <origin xyz="0 0.4 0.05" rpy="0 0 0"/>
     <geometry>
@@ -127,12 +129,12 @@
 <joint name="gripper_stretch" type="prismatic">
   <parent link="arm2"/>
   <child link="gripper_link"/>
-  <origin xyz="0 0.8 0" rpy="0 0 0"/>  <!-- ////////////////////// -->
+  <origin xyz="0 0.8 0" rpy="0 0 0"/>
   <axis xyz="0 0 1"/>
   <limit effort="100" velocity="100" lower="-0.05" upper="0.0"/>
 </joint>
 
-<link name="gripper_link">  <!-- ////////////////////// -->
+<link name="gripper_link">
   <collision>
     <origin xyz="0 0 -0.1" rpy="0 0 0"/>
     <geometry>
@@ -168,7 +170,7 @@
 <joint name="finger1_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger1"/>
-  <origin xyz="0 0.03 -0.23" rpy="0 0 0"/>  <!-- ////////////////////// -->
+  <origin xyz="0 0.03 -0.23" rpy="0 0 0"/>
   <axis xyz="0 1 0"/>
   <limit effort="100" velocity="100" lower="-0.01" upper="0.0"/>
 </joint>
@@ -206,7 +208,7 @@
 <joint name="finger2_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger2"/>
-  <origin xyz="-0.03 0 -0.23" rpy="0 0 0"/>  <!-- ////////////////////// -->
+  <origin xyz="-0.03 0 -0.23" rpy="0 0 0"/>
   <axis xyz="1 0 0"/>
   <limit effort="100" velocity="100" lower="0.0" upper="0.01"/>
 </joint>
@@ -244,7 +246,7 @@
 <joint name="finger3_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger3"/>
-  <origin xyz="0 -0.03 -0.23" rpy="0 0 0"/>  <!-- ////////////////////// -->
+  <origin xyz="0 -0.03 -0.23" rpy="0 0 0"/>
   <axis xyz="0 1 0"/>
   <limit effort="100" velocity="100" lower="0.0" upper="0.01"/>
 </joint>
@@ -282,7 +284,7 @@
 <joint name="finger4_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger4"/>
-  <origin xyz="0.03 0 -0.23" rpy="0 0 0"/>  <!-- ////////////////////// -->
+  <origin xyz="0.03 0 -0.23" rpy="0 0 0"/>
   <axis xyz="1 0 0"/>
   <limit effort="100" velocity="100" lower="-0.01" upper="0.0"/>
 </joint>

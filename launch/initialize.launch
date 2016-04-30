@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find two_scara_collaboration)/launch/initialize.world"/>
+    <arg name="gui" value="true" />
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+  </include>
+
+
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find two_scara_collaboration)/urdf/scara_robot.urdf -urdf -z 1 -model baxter" />
+
+
+</launch>
+

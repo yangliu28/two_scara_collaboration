@@ -38,6 +38,8 @@
 </link>
 
 <gazebo reference="base_link">
+  <mu1>0</mu1>
+  <mu2>0</mu2>
   <material>Gazebo/FlatBlack</material>
 </gazebo>
 

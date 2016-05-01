@@ -1,6 +1,12 @@
 // spawn the red and blue cylinders on the conveyor belt
 // and give them initial speed (by apply_body_wrench) to slide on conveyor
 
+// ros communications:
+    // spawn model through gazebo service: /gazebo/spawn_urdf_model
+    // initialize cylinder speed: /gazebo/apply_body_wrench
+    // get urdf file path of cylinder blocks from parameter server
+    // publish all current blocks through topic: /current_cylinder_blocks
+
 #include <ros/ros.h>
 #include <iostream>
 #include <fstream>
@@ -8,6 +14,7 @@
 #include <string>
 #include <gazebo_msgs/SapwnModel.h>
 #include <gazebo_msgs/ApplyBodyWrench.h>
+#include <std_msgs/Int8MultiArray.h>
 
 
 // int to string converter
@@ -29,6 +36,12 @@ int main(int argc, char **argv) {
     ros::ServiceClient apply_wrench_client;
         = nh.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
     gazebo_msgs::ApplyBodyWrench apply_wrench_srv_msg;  // service message
+
+    // publisher for /current_cylinder_blocks
+    ros::Publisher current_cylinder_publisher
+        = nh.advertise<std_msgs::Int8MultiArray>)("current_cylinder_blocks", 1);
+    std_msgs::Int8MultiArray current_cylinder_msg;
+    current_cylinder_msg.data.clear();
 
     // make sure /gazebo/spawn_urdf_model service is ready
     bool service_ready = false;
@@ -84,17 +97,19 @@ int main(int argc, char **argv) {
     apply_wrench_srv_msg.request.start_time = 0;
     apply_wrench_srv_msg.request.duration = 1000000;
 
-    // begin spawn cylinder blocks and slide on conveyor
+    // begin spawn cylinder blocks and give an initial speed on conveyor
     int i;  // index the cylinder blocks
     while (ros::ok()) {
         std::string index_string = intToString(i);
         std::string model_name;
+        int8 color_index;  // 0 is red, 1 is blue
 
         // prepare spawn model service message
         spawn_model_srv_msg.request.initial_pose.position.y
             = (float)rand()/(float)(RAND_MAX) - 0.5;  // random between -0.5 to 0.5
         if ((rand() - RAND_MAX) > 0) {
             // then choose red cylinder
+            color_index = 0;
             model_name = "red_cylinder_" + index_string;  // initialize model_name
             spawn_model_srv_msg.request.model_name = model_name;
             spawn_model_srv_msg.request.robot_namespace = "red_cylinder_" + index_string;
@@ -102,6 +117,7 @@ int main(int argc, char **argv) {
         }
         else {
             // then choose blue cylinder
+            color_index = 1;
             model_name = "blue_cylinder_" + index_string;
             spawn_model_srv_msg.request.model_name = model_name;  // initialize model_name
             spawn_model_srv_msg.request.robot_namespace = "blue_cylinder_" + index_string;
@@ -125,13 +141,34 @@ int main(int argc, char **argv) {
         }
 
         // prepare apply body wrench service message
-        apply_wrench_srv_msg.request.
+        apply_wrench_srv_msg.request.body_name = model_name + "::base_link";
+        apply_wrench_srv_msg.request.reference_frame = model_name + "::base_link";
+        // call apply body wrench service
+        call_service = apply_wrench_client.call(apply_wrench_srv_msg);
+        if (call_service) {
+            if (apply_wrench_srv_msg.response.success) {
+                ROS_INFO_STREAM(model_name << " speed initialized");
+                ROS_INFO_STREAM("");  // blank line
+            }
+            else {
+                ROS_INFO_STREAM(model_name << " fail to initialize speed");
+                ROS_INFO_STREAM("");  // blank line
+            }
+        }
+        else {
+            ROS_ERROR("Fail to connect with gazebo server");
+            return 0;
+        }
 
+        // publish current cylinder blocks status, all cylinder blocks will be published
+        // no matter if it's successfully spawned, or successfully initialized in speed
+        current_cylinder_msg.data.push_back(color_index);
+        current_cylinder_publisher.publish(current_cylinder_msg);
 
+        ros::spinOnce();
+        ros::Duration(1.0).sleep();  // spawn a cylinder every 1 second
 
     }
-
-
 
 }
 

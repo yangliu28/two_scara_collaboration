@@ -33,11 +33,16 @@
     -J scara_robot_left::rotation1 -0.8
     -J scara_robot_left::rotation2 2.1" />
 
+
   <!-- the cylinder blocks spawner node -->
   <node name="cylinder_blocks_spawner" pkg="two_scara_collaboration" type="cylinder_blocks_spawner" output="screen" />
 
   <!-- the cylinder poses publisher node -->
   <node name="cylinder_blocks_poses_publisher" pkg="two_scara_collaboration" type="cylinder_blocks_poses_publisher" output="screen" />
+
+
+
+
 
 </launch>
 

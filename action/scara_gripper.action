@@ -1,0 +1,15 @@
+# action server message for the gripper control
+# motion of the gripper includes going up and down, grapsing and releasing
+
+# goal definition
+# whether the gripper is at high or low position, low is true
+bool high_low
+# whether the gripper is grasping or releasing, grasp is true
+bool grasp_release
+---
+# result definition
+int32 output
+---
+# feedback
+int32 fdbk
+

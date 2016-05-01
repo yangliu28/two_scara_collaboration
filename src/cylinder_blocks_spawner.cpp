@@ -16,7 +16,6 @@
 #include <gazebo_msgs/ApplyBodyWrench.h>
 #include <std_msgs/Int8MultiArray.h>
 
-
 // int to string converter
 std::string intToString(int a) {
     std::stringstream ss;
@@ -25,7 +24,7 @@ std::string intToString(int a) {
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "cylinder_objects_spawner");
+    ros::init(argc, argv, "cylinder_blocks_spawner");
     ros::NodeHandle nh;
 
     // service client for service /gazebo/spawn_urdf_model
@@ -91,13 +90,18 @@ int main(int argc, char **argv) {
     spawn_model_srv_msg.request.initial_pose.orientation.z = 0.0;
     spawn_model_srv_msg.request.initial_pose.orientation.w = 1.0;
     spawn_model_srv_msg.request.reference_frame = "world";
+    // reference_frame has to be empty, map or world. Otherwise gazebo will return error
+    // http://answers.ros.org/question/65077/errors-while-applying-force-on-a-model/
 
     // prepare the apply body wrench service message
     ros::Time time_temp(0, 0);
     ros::Duration duration_temp(0, 1000000);
     apply_wrench_srv_msg.request.wrench.force.x = -0.002;
+    apply_wrench_srv_msg.request.wrench.force.y = 0.0;
+    apply_wrench_srv_msg.request.wrench.force.z = 0.0;
     apply_wrench_srv_msg.request.start_time = time_temp;
     apply_wrench_srv_msg.request.duration = duration_temp;
+    apply_wrench_srv_msg.request.reference_frame = "world";
 
     // begin spawn cylinder blocks and give an initial speed on conveyor
     int i = 0;  // index the cylinder blocks
@@ -145,7 +149,6 @@ int main(int argc, char **argv) {
 
         // prepare apply body wrench service message
         apply_wrench_srv_msg.request.body_name = model_name + "::base_link";
-        apply_wrench_srv_msg.request.reference_frame = model_name + "::base_link";
         // call apply body wrench service
         call_service = apply_wrench_client.call(apply_wrench_srv_msg);
         if (call_service) {
@@ -171,7 +174,7 @@ int main(int argc, char **argv) {
         ROS_INFO_STREAM("");
 
         ros::spinOnce();
-        ros::Duration(2.0).sleep();  // frequency control, spawn one cylinder in each loop
+        ros::Duration(4.0).sleep();  // frequency control, spawn one cylinder in each loop
 
     }
 

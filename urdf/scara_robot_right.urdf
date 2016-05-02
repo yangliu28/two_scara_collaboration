@@ -126,7 +126,7 @@
 
 
 <!-- gripper base link for the four finger to attach, can move vertically -->
-<joint name="gripper_stretch" type="prismatic">
+<joint name="gripper_joint" type="prismatic">
   <parent link="arm2"/>
   <child link="gripper_link"/>
   <origin xyz="0 0.8 0" rpy="0 0 0"/>

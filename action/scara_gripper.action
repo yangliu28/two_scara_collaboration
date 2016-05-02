@@ -3,14 +3,23 @@
 
 
 # goal definition
-# whether the gripper is at high or low position, low is true
-bool high_low
+# whether commanding the gripper in high or low position
+    # -1 is up
+    # 0 keeps status
+    # 1 is down (means stretch out the gripper for some task)
+int8 up_down_left
+int8 up_down_right
 # whether the gripper is grasping or releasing, grasp is true
-bool grasp_release
+    # -1 is release
+    # 0 keeps status
+    # 1 is grasp
+int8 grasp_release_left
+int8 grasp_release_right
 ---
 # result definition
 int32 output
 ---
 # feedback
 int32 fdbk
+
 

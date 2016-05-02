@@ -1,6 +1,7 @@
 # action server message for the gripper control
 # motion of the gripper includes going up and down, grapsing and releasing
 
+
 # goal definition
 # whether the gripper is at high or low position, low is true
 bool high_low

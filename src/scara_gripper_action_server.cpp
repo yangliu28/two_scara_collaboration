@@ -16,9 +16,9 @@
 
 // constants for joint effort and duration
 const double GRIPPER_UP_EFFORT = 0.1;
-const double GRIPPER_DOWN_EFFORT = 0.1;
-const double GRIPPER_GRASP_EFFORT = 0.1;
-const double GRIPPER_RELEASE_EFFORT = 0.1;
+const double GRIPPER_DOWN_EFFORT = 0.0;
+const double GRIPPER_GRASP_EFFORT_ABS = 0.1;  // absolute value
+const double GRIPPER_RELEASE_EFFORT_ABS = 0.1;  // absolute value
 const ros::Duration EFFORT_DURATION(0, 1000000);
 
 // global variables acted as state machine, to keep gripper status of last command
@@ -55,6 +55,7 @@ private:
     ros::NodeHandle nh_;
     // create a "SimpleActionServer" call "as_"
     actionlib::SimpleActionServer<two_scara_collaboration::scara_gripperAction> as_;
+
     two_scara_collaboration::scara_gripperGoal goal_;  // goal message
     two_scara_collaboration::scara_gripperResult result_;  // result message
     two_scara_collaboration::scara_gripperFeedback feedback_;  // feedback message
@@ -97,7 +98,16 @@ as_(nh_, "gripper_action", boost::bind(&GripperActionServer::executeCb, this, _1
     joint_effort_right2_srv_msg_.start_time = time_temp;
     joint_effort_right3_srv_msg_.start_time = time_temp;
     joint_effort_right4_srv_msg_.start_time = time_temp;
-
+    joint_effort_left0_srv_msg_.duration = EFFORT_DURATION;  // set the duration
+    joint_effort_left1_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_left2_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_left3_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_left4_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_right0_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_right1_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_right2_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_right3_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_right4_srv_msg_.duration = EFFORT_DURATION;
 
     as_.start();  // start the action server
 }
@@ -149,12 +159,61 @@ void GripperActionServer::executeCb(const
 int main(int argc, char **argv) {
     ros::init(argc, argv, "scara_gripper_action_server");
 
-    GripperActionServer action_server_object;  // instance of the class
+    GripperActionServer as_object;  // instance of the class
 
     // in the loop, keep sending joint effort according to global gripper setting
     while (ros::ok()) {
-        // prepare joint effort message and send to gazebo
+        // prepare joint effort message
+        // left gripper
+        if (g_up_down_left == false) {  // gripper goes up
+            as_object.joint_effort_left0_srv_msg_.effort = GRIPPER_UP_EFFORT;
+        }
+        else {  // gripper goes down
+            as_object.joint_effort_left0_srv_msg_.effort = GRIPPER_DOWN_EFFORT;
+        }
+        if (g_grasp_release_left == false) {  // left gripper release
+            as_object.joint_effort_left1_srv_msg_.effort = GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_left2_srv_msg_.effort = GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_left3_srv_msg_.effort = -GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_left4_srv_msg_.effort = -GRIPPER_RELEASE_EFFORT_ABS;
+        }
+        else {  // left gripper grasp
+            as_object.joint_effort_left1_srv_msg_.effort = -GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_left2_srv_msg_.effort = -GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_left3_srv_msg_.effort = GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_left4_srv_msg_.effort = GRIPPER_GRASP_EFFORT_ABS;
+        }
+        // right gripper
+        if (g_up_down_right == false) {  // gripper goes up
+            as_object.joint_effort_right0_srv_msg_.effort = GRIPPER_UP_EFFORT;
+        }
+        else {  // gripper goes down
+            as_object.joint_effort_right0_srv_msg_.effort = GRIPPER_DOWN_EFFORT;
+        }
+        if (g_grasp_release_right == false) {  // right gripper release
+            as_object.joint_effort_right1_srv_msg_.effort = -GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_right2_srv_msg_.effort = -GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_right3_srv_msg_.effort = GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_right4_srv_msg_.effort = GRIPPER_RELEASE_EFFORT_ABS;
+        }
+        else {  // right gripper grasp
+            as_object.joint_effort_right1_srv_msg_.effort = GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_right2_srv_msg_.effort = GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_right3_srv_msg_.effort = -GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_right4_srv_msg_.effort = -GRIPPER_GRASP_EFFORT_ABS;
+        }
 
+        // send service message to gazebo
+        as_object.joint_effort_client_.call(as_object.joint_effort_left0_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_left1_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_left2_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_left3_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_left4_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_right0_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_right1_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_right2_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_right3_srv_msg_);
+        as_object.joint_effort_client_.call(as_object.joint_effort_right4_srv_msg_);
 
 
 

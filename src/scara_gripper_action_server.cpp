@@ -15,10 +15,11 @@
 #include <gazebo_msgs/ApplyJointEffort.h>
 
 // constants for joint effort and duration
-const double gripper_up_effort = 0.1;
-const double gripper_down_effort = 0.1;
-const double gripper_grasp_effort = 0.1;
-const double gripper_release_effort = 0.1;
+const double GRIPPER_UP_EFFORT = 0.1;
+const double GRIPPER_DOWN_EFFORT = 0.1;
+const double GRIPPER_GRASP_EFFORT = 0.1;
+const double GRIPPER_RELEASE_EFFORT = 0.1;
+const ros::Duration EFFORT_DURATION(0, 1000000);
 
 // global variables acted as state machine, to keep gripper status of last command
 bool g_up_down_left = false;  // down is true, means stretch out gripper for task
@@ -34,6 +35,22 @@ public:
     // action callback
     void executeCb(const
         actionlib::SimpleActionServer<two_scara_collaboration::scara_gripperAction>::GoalConstPtr& goal);
+    
+    // service client for "/gazebo/apply_joint_effort"
+    // put service client in public so that it can be accessed from outside
+    ros::ServiceClient joint_effort_client_
+        = nh_.serviceClient<gazebo_msgs::ApplyJointEffort>("/gazebo/apply_joint_effort");
+    // service messages
+    gazebo_msgs::ApplyJointEffort joint_effort_left0_srv_msg_;  // left0 indicate gripper joint
+    gazebo_msgs::ApplyJointEffort joint_effort_left1_srv_msg_;  // left(i) indicate ith finger
+    gazebo_msgs::ApplyJointEffort joint_effort_left2_srv_msg_;
+    gazebo_msgs::ApplyJointEffort joint_effort_left3_srv_msg_;
+    gazebo_msgs::ApplyJointEffort joint_effort_left4_srv_msg_;
+    gazebo_msgs::ApplyJointEffort joint_effort_right0_srv_msg_;  // right0 indicate gripper joint
+    gazebo_msgs::ApplyJointEffort joint_effort_right1_srv_msg_;  // right(i) indicate ith finger
+    gazebo_msgs::ApplyJointEffort joint_effort_right2_srv_msg_;
+    gazebo_msgs::ApplyJointEffort joint_effort_right3_srv_msg_;
+    gazebo_msgs::ApplyJointEffort joint_effort_right4_srv_msg_;
 private:
     ros::NodeHandle nh_;
     // create a "SimpleActionServer" call "as_"
@@ -48,6 +65,40 @@ GripperActionServer::GripperActionServer():
 as_(nh_, "gripper_action", boost::bind(&GripperActionServer::executeCb, this, _1), false)
 {
     ROS_INFO("in constructor of GripperActionServer...");
+
+    // check if service "/gazebo/apply_joint_effort" is ready
+    bool service_ready = false;
+    while (!service_ready) {
+        service_ready = ros::service::exists("/gazebo/apply_joint_effort", true);
+        ROS_INFO("waiting for apply_joint_effort service");
+        ros::Duration(0.5).sleep();
+    }
+    ROS_INFO("apply_joint_effort service is ready");
+
+    // preparation for some service message
+    joint_effort_left0_srv_msg_.joint_name = "scara_robot_left::gripper_joint";  // left
+    joint_effort_left1_srv_msg_.joint_name = "scara_robot_left::finger1_joint";
+    joint_effort_left2_srv_msg_.joint_name = "scara_robot_left::finger2_joint";
+    joint_effort_left3_srv_msg_.joint_name = "scara_robot_left::finger3_joint";
+    joint_effort_left4_srv_msg_.joint_name = "scara_robot_left::finger4_joint";
+    joint_effort_right0_srv_msg_.joint_name = "scara_robot_right::gripper_joint";  // right
+    joint_effort_right1_srv_msg_.joint_name = "scara_robot_right::finger1_joint";
+    joint_effort_right2_srv_msg_.joint_name = "scara_robot_right::finger2_joint";
+    joint_effort_right3_srv_msg_.joint_name = "scara_robot_right::finger3_joint";
+    joint_effort_right4_srv_msg_.joint_name = "scara_robot_right::finger4_joint";
+    ros::Time time_temp(0, 0);
+    joint_effort_left0_srv_msg_.start_time = time_temp;  // set the time to immediately
+    joint_effort_left1_srv_msg_.start_time = time_temp;
+    joint_effort_left2_srv_msg_.start_time = time_temp;
+    joint_effort_left3_srv_msg_.start_time = time_temp;
+    joint_effort_left4_srv_msg_.start_time = time_temp;
+    joint_effort_right0_srv_msg_.start_time = time_temp;
+    joint_effort_right1_srv_msg_.start_time = time_temp;
+    joint_effort_right2_srv_msg_.start_time = time_temp;
+    joint_effort_right3_srv_msg_.start_time = time_temp;
+    joint_effort_right4_srv_msg_.start_time = time_temp;
+
+
     as_.start();  // start the action server
 }
 
@@ -100,24 +151,10 @@ int main(int argc, char **argv) {
 
     GripperActionServer action_server_object;  // instance of the class
 
-    // service client for "/gazebo/apply_joint_effort"
-    ros::ServiceClient joint_effort_client
-        = nh_.serviceClient<gazebo_msgs::ApplyJointEffort>("/gazebo/apply_joint_effort");
-    gazebo_msgs::ApplyJointEffort joint_effort_srv_msg;  // service message
-
-    // check if service "/gazebo/apply_joint_effort" is ready
-    bool service_ready = false;
-    while (!service_ready) {
-        service_ready = ros::service::exists("/gazebo/apply_joint_effort", true);
-        ROS_INFO("waiting for apply_joint_effort service");
-        ros::Duration(0.5).sleep();
-    }
-    ROS_INFO("apply_joint_effort service is ready");
-
     // in the loop, keep sending joint effort according to global gripper setting
     while (ros::ok()) {
         // prepare joint effort message and send to gazebo
-        joint_effort_srv_msg.joint_name = "scara_robot_left::gripper_joint";
+
 
 
 

@@ -147,6 +147,7 @@
 
   <inertial>
     <origin xyz="0 0 0" rpy="0 0 0"/>
+    <!-- make the gripper lightweight -->
     <mass value="0.00001"/>
     <inertia
       ixx="0.00001" ixy="0.0" ixz="0.0"
@@ -188,6 +189,7 @@
 
   <inertial>
     <origin xyz="0 0 0" rpy="0 0 0"/>
+    <!-- make the gripper fingers lightweight -->
     <mass value="0.00001"/>
     <inertia
       ixx="0.00001" ixy="0.0" ixz="0.0"

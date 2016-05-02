@@ -40,6 +40,8 @@
   <!-- the cylinder poses publisher node -->
   <node name="cylinder_blocks_poses_publisher" pkg="two_scara_collaboration" type="cylinder_blocks_poses_publisher" output="screen" />
 
+  <!-- the gripper control action server node -->
+  <node name="scara_gripper_action_server" pkg="two_scara_collaboration" type="scara_gripper_action_server" output="log" />
 
 
 

@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
         ros::Duration(7.0).sleep();  // frequency control, spawn one cylinder in each loop
         // delay time decides density of the cylinders
     }
-
+    return 0;
 }
 
 

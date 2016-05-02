@@ -32,6 +32,7 @@ catkin_simple()
 # cs_add_executable(example src/example.cpp)
 cs_add_executable(cylinder_blocks_spawner src/cylinder_blocks_spawner.cpp)
 cs_add_executable(cylinder_blocks_poses_publisher src/cylinder_blocks_poses_publisher.cpp)
+cs_add_executable(scara_gripper_action_server src/scara_gripper_action_server.cpp)
 
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package

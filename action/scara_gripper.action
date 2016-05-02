@@ -17,7 +17,7 @@ int8 grasp_release_left
 int8 grasp_release_right
 ---
 # result definition
-int32 output
+int32 result
 ---
 # feedback
 int32 fdbk

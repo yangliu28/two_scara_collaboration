@@ -14,12 +14,13 @@
 #include <two_scara_collaboration/scara_gripperAction.h>
 #include <gazebo_msgs/ApplyJointEffort.h>
 
-// constants for joint effort and duration
-const double GRIPPER_UP_EFFORT = 0.1;
+// constants for joint effort and duration, values tuned
+const double GRIPPER_UP_EFFORT = 0.001;
 const double GRIPPER_DOWN_EFFORT = 0.0;
-const double GRIPPER_GRASP_EFFORT_ABS = 0.1;  // absolute value
-const double GRIPPER_RELEASE_EFFORT_ABS = 0.1;  // absolute value
-const ros::Duration EFFORT_DURATION(0, 1000000);
+const double GRIPPER_GRASP_EFFORT_ABS = 0.0001;  // absolute value
+const double GRIPPER_RELEASE_EFFORT_ABS = 0.0001;  // absolute value
+const ros::Duration EFFORT_DURATION(0, 250000000);  // 0.25s, longer than loop time of 0.1s
+const double EFFORT_FREQUENCY = 1/0.1;  // this decide the reaction speed of action server
 
 // global variables acted as state machine, to keep gripper status of last command
 bool g_up_down_left = false;  // down is true, means stretch out gripper for task
@@ -35,11 +36,10 @@ public:
     // action callback
     void executeCb(const
         actionlib::SimpleActionServer<two_scara_collaboration::scara_gripperAction>::GoalConstPtr& goal);
-    
+
     // service client for "/gazebo/apply_joint_effort"
     // put service client in public so that it can be accessed from outside
-    ros::ServiceClient joint_effort_client_
-        = nh_.serviceClient<gazebo_msgs::ApplyJointEffort>("/gazebo/apply_joint_effort");
+    ros::ServiceClient joint_effort_client_;
     // service messages
     gazebo_msgs::ApplyJointEffort joint_effort_left0_srv_msg_;  // left0 indicate gripper joint
     gazebo_msgs::ApplyJointEffort joint_effort_left1_srv_msg_;  // left(i) indicate ith finger
@@ -67,6 +67,10 @@ as_(nh_, "gripper_action", boost::bind(&GripperActionServer::executeCb, this, _1
 {
     ROS_INFO("in constructor of GripperActionServer...");
 
+    // initialize the apply joint effort service client
+    joint_effort_client_
+        = nh_.serviceClient<gazebo_msgs::ApplyJointEffort>("/gazebo/apply_joint_effort");
+
     // check if service "/gazebo/apply_joint_effort" is ready
     bool service_ready = false;
     while (!service_ready) {
@@ -77,37 +81,37 @@ as_(nh_, "gripper_action", boost::bind(&GripperActionServer::executeCb, this, _1
     ROS_INFO("apply_joint_effort service is ready");
 
     // preparation for some service message
-    joint_effort_left0_srv_msg_.joint_name = "scara_robot_left::gripper_joint";  // left
-    joint_effort_left1_srv_msg_.joint_name = "scara_robot_left::finger1_joint";
-    joint_effort_left2_srv_msg_.joint_name = "scara_robot_left::finger2_joint";
-    joint_effort_left3_srv_msg_.joint_name = "scara_robot_left::finger3_joint";
-    joint_effort_left4_srv_msg_.joint_name = "scara_robot_left::finger4_joint";
-    joint_effort_right0_srv_msg_.joint_name = "scara_robot_right::gripper_joint";  // right
-    joint_effort_right1_srv_msg_.joint_name = "scara_robot_right::finger1_joint";
-    joint_effort_right2_srv_msg_.joint_name = "scara_robot_right::finger2_joint";
-    joint_effort_right3_srv_msg_.joint_name = "scara_robot_right::finger3_joint";
-    joint_effort_right4_srv_msg_.joint_name = "scara_robot_right::finger4_joint";
+    joint_effort_left0_srv_msg_.request.joint_name = "scara_robot_left::gripper_joint";  // left
+    joint_effort_left1_srv_msg_.request.joint_name = "scara_robot_left::finger1_joint";
+    joint_effort_left2_srv_msg_.request.joint_name = "scara_robot_left::finger2_joint";
+    joint_effort_left3_srv_msg_.request.joint_name = "scara_robot_left::finger3_joint";
+    joint_effort_left4_srv_msg_.request.joint_name = "scara_robot_left::finger4_joint";
+    joint_effort_right0_srv_msg_.request.joint_name = "scara_robot_right::gripper_joint";  // right
+    joint_effort_right1_srv_msg_.request.joint_name = "scara_robot_right::finger1_joint";
+    joint_effort_right2_srv_msg_.request.joint_name = "scara_robot_right::finger2_joint";
+    joint_effort_right3_srv_msg_.request.joint_name = "scara_robot_right::finger3_joint";
+    joint_effort_right4_srv_msg_.request.joint_name = "scara_robot_right::finger4_joint";
     ros::Time time_temp(0, 0);
-    joint_effort_left0_srv_msg_.start_time = time_temp;  // set the time to immediately
-    joint_effort_left1_srv_msg_.start_time = time_temp;
-    joint_effort_left2_srv_msg_.start_time = time_temp;
-    joint_effort_left3_srv_msg_.start_time = time_temp;
-    joint_effort_left4_srv_msg_.start_time = time_temp;
-    joint_effort_right0_srv_msg_.start_time = time_temp;
-    joint_effort_right1_srv_msg_.start_time = time_temp;
-    joint_effort_right2_srv_msg_.start_time = time_temp;
-    joint_effort_right3_srv_msg_.start_time = time_temp;
-    joint_effort_right4_srv_msg_.start_time = time_temp;
-    joint_effort_left0_srv_msg_.duration = EFFORT_DURATION;  // set the duration
-    joint_effort_left1_srv_msg_.duration = EFFORT_DURATION;
-    joint_effort_left2_srv_msg_.duration = EFFORT_DURATION;
-    joint_effort_left3_srv_msg_.duration = EFFORT_DURATION;
-    joint_effort_left4_srv_msg_.duration = EFFORT_DURATION;
-    joint_effort_right0_srv_msg_.duration = EFFORT_DURATION;
-    joint_effort_right1_srv_msg_.duration = EFFORT_DURATION;
-    joint_effort_right2_srv_msg_.duration = EFFORT_DURATION;
-    joint_effort_right3_srv_msg_.duration = EFFORT_DURATION;
-    joint_effort_right4_srv_msg_.duration = EFFORT_DURATION;
+    joint_effort_left0_srv_msg_.request.start_time = time_temp;  // set the time to immediately
+    joint_effort_left1_srv_msg_.request.start_time = time_temp;
+    joint_effort_left2_srv_msg_.request.start_time = time_temp;
+    joint_effort_left3_srv_msg_.request.start_time = time_temp;
+    joint_effort_left4_srv_msg_.request.start_time = time_temp;
+    joint_effort_right0_srv_msg_.request.start_time = time_temp;
+    joint_effort_right1_srv_msg_.request.start_time = time_temp;
+    joint_effort_right2_srv_msg_.request.start_time = time_temp;
+    joint_effort_right3_srv_msg_.request.start_time = time_temp;
+    joint_effort_right4_srv_msg_.request.start_time = time_temp;
+    joint_effort_left0_srv_msg_.request.duration = EFFORT_DURATION;  // set the duration
+    joint_effort_left1_srv_msg_.request.duration = EFFORT_DURATION;
+    joint_effort_left2_srv_msg_.request.duration = EFFORT_DURATION;
+    joint_effort_left3_srv_msg_.request.duration = EFFORT_DURATION;
+    joint_effort_left4_srv_msg_.request.duration = EFFORT_DURATION;
+    joint_effort_right0_srv_msg_.request.duration = EFFORT_DURATION;
+    joint_effort_right1_srv_msg_.request.duration = EFFORT_DURATION;
+    joint_effort_right2_srv_msg_.request.duration = EFFORT_DURATION;
+    joint_effort_right3_srv_msg_.request.duration = EFFORT_DURATION;
+    joint_effort_right4_srv_msg_.request.duration = EFFORT_DURATION;
 
     as_.start();  // start the action server
 }
@@ -153,7 +157,7 @@ void GripperActionServer::executeCb(const
     }
 
     result_.result = 1;  // the result value doesn't matter
-    as_.setSucceeced(result_);  // tell the client this action is finished
+    as_.setSucceeded(result_);  // tell the client this action is finished
 }
 
 int main(int argc, char **argv) {
@@ -161,46 +165,56 @@ int main(int argc, char **argv) {
 
     GripperActionServer as_object;  // instance of the class
 
-    // in the loop, keep sending joint effort according to global gripper setting
+    // apply all joint effort loop
+    ros::Rate loop_rate(EFFORT_FREQUENCY);  // loop frequency control
+    ros::Time time_last, time_now;
+    time_last  = ros::Time::now();
+    ros::Duration loop_duration;
     while (ros::ok()) {
+        // loop time measurement
+        time_now = ros::Time::now();
+        loop_duration = time_now - time_last;
+        time_last = time_now;
+        // ROS_INFO_STREAM("loop duration: " << loop_duration.toSec());
+
         // prepare joint effort message
         // left gripper
         if (g_up_down_left == false) {  // gripper goes up
-            as_object.joint_effort_left0_srv_msg_.effort = GRIPPER_UP_EFFORT;
+            as_object.joint_effort_left0_srv_msg_.request.effort = GRIPPER_UP_EFFORT;
         }
         else {  // gripper goes down
-            as_object.joint_effort_left0_srv_msg_.effort = GRIPPER_DOWN_EFFORT;
+            as_object.joint_effort_left0_srv_msg_.request.effort = GRIPPER_DOWN_EFFORT;
         }
         if (g_grasp_release_left == false) {  // left gripper release
-            as_object.joint_effort_left1_srv_msg_.effort = GRIPPER_RELEASE_EFFORT_ABS;
-            as_object.joint_effort_left2_srv_msg_.effort = GRIPPER_RELEASE_EFFORT_ABS;
-            as_object.joint_effort_left3_srv_msg_.effort = -GRIPPER_RELEASE_EFFORT_ABS;
-            as_object.joint_effort_left4_srv_msg_.effort = -GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_left1_srv_msg_.request.effort = -GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_left2_srv_msg_.request.effort = GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_left3_srv_msg_.request.effort = GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_left4_srv_msg_.request.effort = -GRIPPER_RELEASE_EFFORT_ABS;
         }
         else {  // left gripper grasp
-            as_object.joint_effort_left1_srv_msg_.effort = -GRIPPER_GRASP_EFFORT_ABS;
-            as_object.joint_effort_left2_srv_msg_.effort = -GRIPPER_GRASP_EFFORT_ABS;
-            as_object.joint_effort_left3_srv_msg_.effort = GRIPPER_GRASP_EFFORT_ABS;
-            as_object.joint_effort_left4_srv_msg_.effort = GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_left1_srv_msg_.request.effort = GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_left2_srv_msg_.request.effort = -GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_left3_srv_msg_.request.effort = -GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_left4_srv_msg_.request.effort = GRIPPER_GRASP_EFFORT_ABS;
         }
         // right gripper
         if (g_up_down_right == false) {  // gripper goes up
-            as_object.joint_effort_right0_srv_msg_.effort = GRIPPER_UP_EFFORT;
+            as_object.joint_effort_right0_srv_msg_.request.effort = GRIPPER_UP_EFFORT;
         }
         else {  // gripper goes down
-            as_object.joint_effort_right0_srv_msg_.effort = GRIPPER_DOWN_EFFORT;
+            as_object.joint_effort_right0_srv_msg_.request.effort = GRIPPER_DOWN_EFFORT;
         }
         if (g_grasp_release_right == false) {  // right gripper release
-            as_object.joint_effort_right1_srv_msg_.effort = -GRIPPER_RELEASE_EFFORT_ABS;
-            as_object.joint_effort_right2_srv_msg_.effort = -GRIPPER_RELEASE_EFFORT_ABS;
-            as_object.joint_effort_right3_srv_msg_.effort = GRIPPER_RELEASE_EFFORT_ABS;
-            as_object.joint_effort_right4_srv_msg_.effort = GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_right1_srv_msg_.request.effort = GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_right2_srv_msg_.request.effort = -GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_right3_srv_msg_.request.effort = -GRIPPER_RELEASE_EFFORT_ABS;
+            as_object.joint_effort_right4_srv_msg_.request.effort = GRIPPER_RELEASE_EFFORT_ABS;
         }
         else {  // right gripper grasp
-            as_object.joint_effort_right1_srv_msg_.effort = GRIPPER_GRASP_EFFORT_ABS;
-            as_object.joint_effort_right2_srv_msg_.effort = GRIPPER_GRASP_EFFORT_ABS;
-            as_object.joint_effort_right3_srv_msg_.effort = -GRIPPER_GRASP_EFFORT_ABS;
-            as_object.joint_effort_right4_srv_msg_.effort = -GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_right1_srv_msg_.request.effort = -GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_right2_srv_msg_.request.effort = GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_right3_srv_msg_.request.effort = GRIPPER_GRASP_EFFORT_ABS;
+            as_object.joint_effort_right4_srv_msg_.request.effort = -GRIPPER_GRASP_EFFORT_ABS;
         }
 
         // send service message to gazebo
@@ -215,11 +229,9 @@ int main(int argc, char **argv) {
         as_object.joint_effort_client_.call(as_object.joint_effort_right3_srv_msg_);
         as_object.joint_effort_client_.call(as_object.joint_effort_right4_srv_msg_);
 
-
-
+        loop_rate.sleep();
         ros::spinOnce();
     }
-
     return 0;
 }
 

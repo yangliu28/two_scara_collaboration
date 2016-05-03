@@ -19,13 +19,13 @@ A gripper control action server node can keep gripper at desired location, and r
 
 Steps not finished in the plan:
 
-    joint position controller of scara (problem with ros_control)
+  joint position controller of scara (problem with ros_control)
 
-    inverse kinematics of scara robot
+  inverse kinematics of scara robot
 
-    collision avoidance
+  collision avoidance
 
-    task distribution
+  task distribution
 
 The problem with position control of scara using ros_control is that, when load the controller from a launch file, it always looks for robot model at "/robot_description", instead of what I defined "/scara_robot_left/robot_description" in the parameter server. I can change name to"/robot_description", but there is no good way to control multiple different robots and having their models under same name in parameter. Some posts about this problem:
 

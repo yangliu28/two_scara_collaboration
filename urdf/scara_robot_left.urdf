@@ -3,7 +3,18 @@
 
 <!-- simple two-axis scara robot -->
 
-<!-- this is the one at the LEFT side of the conveyor belt -->
+<!-- this is the scara at the LEFT side of the conveyor -->
+<!-- the robot will be fixed on the ground, not like the mobile swarm robot -->
+<!-- didn't find a good way to specify the orientation so as to duplicate model -->
+
+
+
+<gazebo>
+  <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+    <robotNamespace>/scara_robot_left</robotNamespace>
+    <!-- <robotParam>/scara_robot_left/robot_description</robotParam> -->
+  </plugin>
+</gazebo>
 
 
 <!-- world link -->
@@ -315,6 +326,30 @@
 <gazebo reference="finger4">
   <material>Gazebo/White</material>
 </gazebo>
+
+
+
+<transmission name="transmission1">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="rotation1">
+    <hardwareInterface>EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="motor1">
+    <hardwareInterface>EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="transmission2">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="rotation2">
+    <hardwareInterface>EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="motor2">
+    <hardwareInterface>EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
 
 
 

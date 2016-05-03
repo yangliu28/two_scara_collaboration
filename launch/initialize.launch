@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
 
-  <!-- put file path of urdf model in parameter server -->
-  <!-- more details at launch file of swarm simulation -->
+  <!-- put file path of urdf model in parameter server, for the cylinder spawner node -->
+  <!-- more details at launch file of swarm robot simulation -->
   <param name="red_cylinder_path" type="str" value="/home/yang/ros_ws/src/two_scara_collaboration/urdf/red_cylinder.urdf"/>
   <param name="blue_cylinder_path" type="str" value="/home/yang/ros_ws/src/two_scara_collaboration/urdf/blue_cylinder.urdf"/>
 
@@ -43,6 +43,14 @@
   <!-- the gripper control action server node -->
   <node name="scara_gripper_action_server" pkg="two_scara_collaboration" type="scara_gripper_action_server" output="log" />
 
+
+
+
+
+
+
+  <!-- for ros control to be used with scara robot -->
+  <param name="/scara_robot_left/robot_description" textfile="$(find two_scara_collaboration)/urdf/scara_robot_left.urdf" />
 
 
 

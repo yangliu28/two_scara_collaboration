@@ -3,11 +3,7 @@
 
 <!-- simple two-axis scara robot -->
 
-<!-- this is the one at the right side of the conveyor belt -->
-<!-- the robot will be fixed on the ground, not like the mobile swarm robot -->
-<!-- didn't find a good way to specify the orientation so that to duplicate model -->
-
-<!-- this file contains more comments than the left one -->
+<!-- this is the scara at the right side of the conveyo belt -->
 
 <!-- world link -->
 <link name="world"/>

@@ -8,12 +8,12 @@
 <!-- didn't find a good way to specify the orientation so as to duplicate model -->
 
 
-<gazebo>
+<!-- <gazebo>
   <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
     <robotNamespace>/scara_robot_left</robotNamespace>
-    <!-- <robotParam>/scara_robot_left/robot_description</robotParam> -->
+    <robotParam>/scara_robot_left/robot_description</robotParam>
   </plugin>
-</gazebo>
+</gazebo> -->
 
 
 <!-- world link -->
@@ -328,7 +328,7 @@
 
 
 
-<transmission name="transmission1">
+<!-- <transmission name="transmission1">
   <type>transmission_interface/SimpleTransmission</type>
   <joint name="rotation1">
     <hardwareInterface>EffortJointInterface</hardwareInterface>
@@ -348,7 +348,7 @@
     <hardwareInterface>EffortJointInterface</hardwareInterface>
     <mechanicalReduction>1</mechanicalReduction>
   </actuator>
-</transmission>
+</transmission> -->
 
 
 

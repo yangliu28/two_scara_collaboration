@@ -37,13 +37,13 @@ int cylinder_add_start_index = 0;
 void cylinderPosesCallback(const two_scara_collaboration::cylinder_blocks_poses& cylinder_poses_msg) {
     // get the x coordinates
     std::vector<double> current_cylinder_x;
-    int robot_quantity = cylinder_poses_msg.x.size();
-    current_cylinder_x.resize(robot_quantity);
+    int cylinder_quantity = cylinder_poses_msg.x.size();
+    current_cylinder_x.resize(cylinder_quantity);
     current_cylinder_x = cylinder_poses_msg.x;
 
     // check for pool addition
     // add cylinders only after the cylinder_start_index
-    for (int i=cylinder_add_start_index; i<robot_quantity; i++) {
+    for (int i=cylinder_add_start_index; i<cylinder_quantity; i++) {
         if (current_cylinder_x[i] > RANGE_LOWER_LIMIT
             && current_cylinder_x[i] < RANGE_UPPER_LIMIT) {
             bool in_pool = false;  // presume not in the pool

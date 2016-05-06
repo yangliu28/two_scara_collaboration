@@ -43,14 +43,14 @@
   <!-- the gripper control action server node -->
   <node name="scara_gripper_action_server" pkg="two_scara_collaboration" type="scara_gripper_action_server" output="log" />
 
-
-
+  <!-- the scara robot joint controller node -->
+  <node name="scara_joint_controller" pkg="two_scara_collaboration" type="scara_joint_controller" output="log" />
 
 
 
 
   <!-- for ros control to be used with scara robot -->
-  <param name="/scara_robot_left/robot_description" textfile="$(find two_scara_collaboration)/urdf/scara_robot_left.urdf" />
+<!--   <param name="/scara_robot_left/robot_description" textfile="$(find two_scara_collaboration)/urdf/scara_robot_left.urdf" /> -->
 
 
 

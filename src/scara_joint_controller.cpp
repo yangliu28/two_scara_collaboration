@@ -1,7 +1,7 @@
 // the joint controller for all four joint of two scara robots
 // a PD controller read joint angle & rate, and apply joint torque
 
-// the "Joint" class is copied from my previous project
+// the "Joint" class is copied from my previous project, with some minor changes
 // one instance of this class to control one joint of the robots
 // ros communication of the class:
     // service clients, /gazebo/get_joint_properties, /gazebo/apply_joint_effort
@@ -21,7 +21,7 @@
 // class definition
 class Joint {
 public:
-    Joint(ros::NodeHandle nh, std::string joint_name, double dt); // constructor
+    Joint(ros::NodeHandle nh, std::string joint_name, double pos_cmd, double dt); // constructor
     ~Joint() {}; // destructor
     void getJointState();
     void jointTrqControl();
@@ -65,10 +65,10 @@ private:
     std::string joint_name;
 };
 
-Joint::Joint(ros::NodeHandle nh, std::string joint_name, double dt) {
+Joint::Joint(ros::NodeHandle nh, std::string joint_name, double pos_cmd, double dt) {
     // initialize parameters
     this -> joint_name = joint_name;
-    pos_cmd = 0.0;
+    this -> pos_cmd = pos_cmd;  // give a initial position
     ros::Duration duration(dt);
     kp = 10.0;
     kv = 3.0;
@@ -135,10 +135,10 @@ void Joint::getJointState() {
 void Joint::jointTrqControl() {
     pos_err = pos_cmd - pos_cur;
     // watch for periodicity
-    if (pos_err > M_PI)
-        pos_err = pos_err - 2 * M_PI;
-    if (pos_err > M_PI)
-        pos_err = pos_err + 2 * M_PI;
+    // if (pos_err > M_PI)
+    //     pos_err = pos_err - 2 * M_PI;
+    // if (pos_err > M_PI)
+    //     pos_err = pos_err + 2 * M_PI;
     // control algorithm in one line
     trq_cmd  = kp * pos_err - kv * vel_cur;
     // publish the torque message
@@ -195,15 +195,15 @@ int main(int argc, char **argv) {
     double dt = 0.01;  // sample time for the joint controller
 
     // instantiate 4 joint instances
-    Joint scara_left_joint1(nh, "scara_robot_left::rotation1", dt);
-    Joint scara_left_joint2(nh, "scara_robot_left::rotation2", dt);
-    Joint scara_right_joint1(nh, "scara_robot_right::rotation1", dt);
-    Joint scara_right_joint2(nh, "scara_robot_right::rotation2", dt);
+    Joint scara_left_joint1(nh, "scara_robot_left::rotation1", -0.78, dt);
+    Joint scara_left_joint2(nh, "scara_robot_left::rotation2", 2.1, dt);
+    Joint scara_right_joint1(nh, "scara_robot_right::rotation1", -0.78, dt);
+    Joint scara_right_joint2(nh, "scara_robot_right::rotation2", 2.1, dt);
 
     // set kp & kv here after being tuned
-    scara_left_joint1.kpkvSetting(1, 0.2);
+    scara_left_joint1.kpkvSetting(80, 16);
     scara_left_joint2.kpkvSetting(1, 0.2);
-    scara_right_joint1.kpkvSetting(1, 0.2);
+    scara_right_joint1.kpkvSetting(80, 16);
     scara_right_joint2.kpkvSetting(1, 0.2);
 
     ros::Rate rate_timer(1/dt);

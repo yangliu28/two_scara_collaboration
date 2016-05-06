@@ -58,7 +58,7 @@
   <child link="arm1"/>
   <origin xyz="0 0 0.4" rpy="0 0 0"/>
   <axis xyz="0 0 1"/>
-  <limit effort="100" velocity="100" lower="-1.5708" upper="1.5708"/>
+  <limit effort="1000" velocity="1000" lower="-1.5708" upper="1.5708"/>
 </joint>
 
 <link name="arm1">
@@ -98,7 +98,7 @@
   <child link="arm2"/>
   <origin xyz="0 -1 0.1" rpy="0 0 0"/>
   <axis xyz="0 0 1"/>
-  <limit effort="100" velocity="100" lower="-3.00" upper="3.00"/>
+  <limit effort="1000" velocity="1000" lower="-3.00" upper="3.00"/>
 </joint>
 
 <link name="arm2">

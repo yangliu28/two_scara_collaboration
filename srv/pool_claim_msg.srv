@@ -1,0 +1,6 @@
+# service message to claim some cylinder from active pool
+
+int8 cylinder_index
+---
+bool cylinder_claimed
+

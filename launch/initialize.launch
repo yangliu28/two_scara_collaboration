@@ -46,6 +46,9 @@
   <!-- the scara robot joint controller node -->
   <node name="scara_joint_controller" pkg="two_scara_collaboration" type="scara_joint_controller" output="log" />
 
+  <!-- the cylinder active pool maintainer node -->
+  <node name="cylinder_active_pool" pkg="two_scara_collaboration" type="cylinder_active_pool" output="screen" />
+
 
 
 

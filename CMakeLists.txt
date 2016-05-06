@@ -34,6 +34,7 @@ cs_add_executable(cylinder_blocks_spawner src/cylinder_blocks_spawner.cpp)
 cs_add_executable(cylinder_blocks_poses_publisher src/cylinder_blocks_poses_publisher.cpp)
 cs_add_executable(scara_gripper_action_server src/scara_gripper_action_server.cpp)
 cs_add_executable(scara_joint_controller src/scara_joint_controller.cpp)
+cs_add_executable(cylinder_active_pool src/cylinder_active_pool.cpp)
 
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package

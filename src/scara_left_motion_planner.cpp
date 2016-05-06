@@ -10,7 +10,7 @@
     // subscribe to topic "/cylinder_active_pool"
     // service client to service "/cylinder_pool_claim"
     // subscribe to topic "/scara_right_upper_boundary"
-    // publish the topic "/scara_left_upper_boundary"
+    // service client to service "/scara_left_upper_boundary_change"
     // action client for gripper control, "gripper_action"
 
 // motion steps decomposed:
@@ -32,6 +32,7 @@
 #include <two_scara_collaboration/cylinder_blocks_poses.h>
 #include <std_msgs/Int8MultiArray.h>
 #include <two_scara_collaboration/scara_upper_boundary.h>
+#include <two_scara_collaboration/upper_boundary_change.h>
 #include <actionlib/client/simple_action_client.h>
 #include <two_scara_collaboration/scara_gripperAction.h>
 #include <gazebo_msgs/GetModelState.h>
@@ -39,12 +40,12 @@
 // the measured absolute speed of the cylinder
 const double CYLINDER_SPEED = 1.2;  // the cylinder is moving along -x direction
 
-
 // global variables
 std::vector<double> g_cylinder_x;  // only x y coordinates matter
 std::vector<double> g_cylinder_y;
 std::vector<int> g_cylinder_pool;  // the active pool
-two_scara_collaboration::scara_upper_boundary g_scara_right_upper_boundary;
+bool g_right_in_action;  // upper boundary status of right scara
+double g_right_upper_boundary;
 
 
 // kinematics for the left scara robot
@@ -93,7 +94,8 @@ void cylinderPoolCallback(const std_msgs::Int8MultiArray& cylinder_pool_msg) {
 void scaraRightUpperBoundaryCallback(const
     two_scara_collaboration::scara_upper_boundary& upper_boundary_msg) {
     // update on upper boundary of right scara
-    g_scara_right_upper_boundary = upper_boundary_msg;
+    g_right_in_action = upper_boundary_msg.in_action;
+    g_right_upper_boundary = upper_boundary_msg.upper_boundary;
 }
 
 
@@ -122,10 +124,10 @@ int main(int argc, char** argv) {
     // subscribe to topic "/scara_right_upper_boundary"
     ros::Subscriber scara_right_upper_boundary_subscriber
         = nh.subscribe("/scara_right_upper_boundary", 1, scaraRightUpperBoundaryCallback);
-    // publish on topic "/scara_left_upper_boundary"
-    ros::Publisher scara_left_upper_boundary_publisher
-        = nh.advertise<two_scara_collaboration::scara_upper_boundary>("/scara_left_upper_boundary", 1);
-    two_scara_collaboration::scara_left_upper_boundary scara_left_upper_boundary_msg;
+    // service client to service "/scara_left_upper_boundary_change"
+    ros::ServiceClient scara_left_upper_boundary_client
+        = nh.serviceClient<two_scara_collaboration::upper_boundary_change>("/scara_left_upper_boundary_change");
+    two_scara_collaboration::upper_boundary_change left_boundary_change_srv;    
     // action client for gripper control, "gripper_action"
     actionlib::SimpleActionClient<two_scara_collaboration::scara_gripperAction>
         scara_gripper_action_client("gripper_action", true);
@@ -143,10 +145,65 @@ int main(int argc, char** argv) {
     // the motion planner loop
     while (ros::ok()) {
         // motion has been divided into four parts according to the purposes
-        // 1.stand by position -> target cylinder position
         // 2.target cylinder hovering (for cylinder grasping operation)
         // 3.target cylinder position -> drop position
         // 4.drop position -> stand by position (high speed)
+
+        // 1.stand by position -> target cylinder position
+        // claim cylinders from cylinder active pool
+        bool cylinder_claimed = false;
+        int cylinder_index;
+        while (!cylinder_claimed) {
+            // cylinder not claimed
+            for (int i=0; i<g_cylinder_pool.size(); i++) {
+                cylinder_claim_srv_msg.request.cylinder_index = g_cylinder_pool[i];
+                // call the cylinder claim service
+                if (cylinder_pool_claim_client.call(cylinder_claim_srv_msg)) {
+                    if (cylinder_claim_srv_msg.response.cylinder_claimed) {
+                        // cylinder has been successfully claimed
+                        cylinder_claimed = true;
+                        cylinder_index = g_cylinder_pool[i];
+                        break;
+                    }
+                }
+            }
+            if (!cylinder_claimed)
+                ros::Duration(0.5).sleep();  // sleep for half a second
+            ros::spinOnce();
+        }
+        ROS_INFO_STREAM("cylinder claimed by left scara: " << cylinder_index);
+        // check upper boundary status of right scara
+        bool left_in_action = false;
+        double left_upper_boundary;
+        if (g_right_in_action) {
+            // right scara is in action, check boundary value for intersection
+            // if left_boundary-right_boundary < 0.142, then there is intersection
+            while ((g_cylinder_y[cylinder_index] - g_right_upper_boundary) < 0.142) {
+                // there is boundary intersection
+                ros::Duration(0.1).sleep();  // sleep for 0.1 second
+            }
+        }
+        // no intersection anymore
+        left_in_action = true;
+        left_upper_boundary = g_cylinder_y[cylinder_index];
+        // send boundary message to boundary topics maintainer
+        left_boundary_change_srv.request.in_action_change = true;
+        left_boundary_change_srv.request.in_action = left_in_action;
+        left_boundary_change_srv.request.upper_boundary_change = true;
+        left_boundary_change_srv.request.upper_boundary = left_upper_boundary;
+        scara_left_upper_boundary_client.call(left_boundary_change_srv);
+        if (left_boundary_change_srv.response.change_is_done)
+            ROS_INFO_STREAM("left scara upper boundary updated in step 1");
+        else
+            ROS_INFO_STREAM("left scara upper boundary not update in step 1");
+        
+        // calculate target cylinder position
+        std::vector<double> cylinder_position;
+        cylinder_position.resize(2);
+        cylinder_position[0] = g_cylinder_x[cylinder_index];
+        cylinder_position[1] = g_cylinder_y[cylinder_index];
+
+
 
 
     }

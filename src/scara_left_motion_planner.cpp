@@ -12,11 +12,10 @@
     // subscribe to topic "/scara_right_upper_boundary"
     // publish the topic "/scara_left_upper_boundary"
     // action client for gripper control, "gripper_action"
-    // service client to get cylinder speed "/gazebo/get_model_state"
 
 // motion steps decomposed:
     // 1.stand by position -> target cylinder position
-    // 2.target cylinder position hovering (for cylinder grasping operation)
+    // 2.target cylinder hovering (for cylinder grasping operation)
     // 3.target cylinder position -> drop position
     // 4.drop position -> stand by position (high speed)
 // only in motion step 1, the operation may be delayed when the other robot is in operation range
@@ -37,6 +36,10 @@
 #include <two_scara_collaboration/scara_gripperAction.h>
 #include <gazebo_msgs/GetModelState.h>
 
+// the measured absolute speed of the cylinder
+const double CYLINDER_SPEED = 1.2;  // the cylinder is moving along -x direction
+
+
 // global variables
 std::vector<double> g_cylinder_x;  // only x y coordinates matter
 std::vector<double> g_cylinder_y;
@@ -44,13 +47,31 @@ std::vector<int> g_cylinder_pool;  // the active pool
 two_scara_collaboration::scara_upper_boundary g_scara_right_upper_boundary;
 
 
+// kinematics for the left scara robot
 std::vector<double> scara_left_kinematics(std::vector<double> joints) {
-    // kinematics for the left scara robot
+    // x_generic and y_generic for the generic coordinates used in scara kinematics
+    double x_generic = cos(joints[0]) + 0.8*cos(joints[0] + joints[1]);
+    double y_generic = sin(joints[0]) + 0.8*sin(joints[0] + joints[1]);
+    // convert to coordinates in the view of left scara
+    std::vector<double> output_position;
+    output_position.resize(2);
+    output_position[0] = y_generic;  // x coordinate
+    output_position[1] = 1.5 - x_generic;  // y coordinate
+    return output_position;
 }
 
+// inverse kinematics for the left scara robot
 std::vector<double> scara_left_inverse_kinematics(std::vector<double> position) {
-    // inverse kinematics for the left scara robot
-    // robot is always positive configured, so only return the position configuration
+    // the returned robot configuration is always positive
+    // convert position to the generic coordinates in scara kinematics
+    double x_generic = 1.5 - position[1];
+    double y_generic = position[0];
+    std::vector<double> output_joints;
+    output_joints.resize(2);
+    double end_quad_dist = pow(x_generic, 2) + pow(y_generic, 2);
+    output_joints[0] = atan(y_generic/x_generic) - acos((0.36 + end_quad_dist)/(2*sqrt(end_quad_dist)));
+    output_joints[1] = M_PI - acos((1.64 - end_quad_dist)/1.6);
+    return output_joints;
 }
 
 void cylinderPosesCallback(const two_scara_collaboration::cylinder_blocks_poses& cylinder_poses_msg) {
@@ -77,11 +98,8 @@ void scaraRightUpperBoundaryCallback(const
 
 
 int main(int argc, char** argv) {
-    ros::inti(argc, argv, "scara_left_motion_planner");
+    ros::init(argc, argv, "scara_left_motion_planner");
     ros::NodeHandle nh;
-
-    // 
-    double cylinder_speed;
 
     // initialize subscriber to "/cylinder_blocks_poses"
     ros::Subscriber cylinder_poses_subscriber = nh.subscribe("/cylinder_blocks_poses"
@@ -112,23 +130,26 @@ int main(int argc, char** argv) {
     actionlib::SimpleActionClient<two_scara_collaboration::scara_gripperAction>
         scara_gripper_action_client("gripper_action", true);
     two_scara_collaboration::scara_gripperGoal scara_gripper_goal;
-    // service client to get cylinder speed "/gazebo/get_model_state"
-    ros::Serviceclient get_model_state_client
-        = nh.serviceClient<gazebo_msgs/GetModelState>("/gazebo/get_model_state");
 
-    // check if service "/gazebo/get_model_state" is ready
-    bool service_ready = false;
-    while (!service_ready) {
-        service_ready = ros::service::exists("/gazebo/get_model_state", true);
-        ROS_INFO("waiting for get_model_state service");
+    // use "/gazebo/get_model_state" only to check if Gazebo is up and running
+    bool gazebo_ready = false;
+    while (!gazebo_ready) {
+        gazebo_ready = ros::service::exists("/gazebo/get_model_state", true);
+        ROS_INFO("waiting for gazebo to start");
         ros::Duration(0.5).sleep();
     }
-    ROS_INFO("get_model_state service is ready");
+    ROS_INFO("gazebo is ready");
 
-    // get the speed of the last cylinder in queue
-    // so that it has speed instead of falling out of conveyor
+    // the motion planner loop
+    while (ros::ok()) {
+        // motion has been divided into four parts according to the purposes
+        // 1.stand by position -> target cylinder position
+        // 2.target cylinder hovering (for cylinder grasping operation)
+        // 3.target cylinder position -> drop position
+        // 4.drop position -> stand by position (high speed)
 
 
+    }
 
 
 }

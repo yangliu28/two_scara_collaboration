@@ -1,0 +1,9 @@
+# service message to change published data in upper boundary topics
+
+bool in_action_change  # decide if in_action is to change or remain same
+bool in_action  # whether it goes into the upper area of the conveyor belt
+bool upper_boundary_change  # decide if upper_boundary is to change or remain same
+float64 upper_boundary  # the upper boundary data
+---
+bool change_is_done
+

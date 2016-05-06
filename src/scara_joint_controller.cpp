@@ -11,9 +11,12 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
+#include <math.h>
+#include <string>
 #include <gazebo_msgs/ApplyJointEffort.h>
 #include <gazebo_msgs/GetJointProperties.h>
-#include <gazebo_msgs/JointState.h>
+#include <sensor_msgs/JointState.h>
+#include <two_scara_collaboration/kpkv_msg.h>
 
 // class definition
 class Joint {
@@ -27,7 +30,8 @@ private:
     // callback for the pos_cmd subscriber
     void posCmdCB(const std_msgs::Float64& pos_cmd_msg);
     // callback for kpkv service server
-    bool kpkvCallback(ps5_yxl1450::kpkv_msgRequest& request, ps5_yxl1450::kpkv_msgResponse& response);
+    bool kpkvCallback(two_scara_collaboration::kpkv_msgRequest& request
+        , two_scara_collaboration::kpkv_msgResponse& response);
     // service clients
     ros::ServiceClient get_jnt_state_client;
     ros::ServiceClient set_trq_client;
@@ -69,20 +73,26 @@ Joint::Joint(ros::NodeHandle nh, std::string joint_name, double dt) {
     kp = 10.0;
     kv = 3.0;
 
+    pos_cur = 0.0;
+
     // initialize gazebo clients
     get_jnt_state_client = nh.serviceClient<gazebo_msgs::GetJointProperties>("/gazebo/get_joint_properties");
     set_trq_client = nh.serviceClient<gazebo_msgs::ApplyJointEffort>("/gazebo/apply_joint_effort");
     // initialize publisher objects
-    pos_publisher = nh.advertise<std_msgs::Float64>(joint_name + "_pos", 1);
-    vel_publisher = nh.advertise<std_msgs::Float64>(joint_name + "_vel", 1);
-    trq_publisher = nh.advertise<std_msgs::Float64>(joint_name + "_trq", 1);
-    joint_state_publisher = nh.advertise<sensor_msgs::JointState>(joint_name + "_states", 1); 
+    // check if there is "::" symbol in the string, replace with "_"
+    std::string joint_name_published = joint_name;
+    std::size_t found = joint_name_published.find("::");
+    if (found!=std::string::npos) {
+        joint_name_published.replace(found, 2, "_");
+    }
+    pos_publisher = nh.advertise<std_msgs::Float64>(joint_name_published + "_pos", 1);
+    vel_publisher = nh.advertise<std_msgs::Float64>(joint_name_published + "_vel", 1);
+    trq_publisher = nh.advertise<std_msgs::Float64>(joint_name_published + "_trq", 1);
+    joint_state_publisher = nh.advertise<sensor_msgs::JointState>(joint_name_published + "_states", 1); 
     // initialize subscriber object
-    // pos_cmd_subscriber = nh.subscribe(joint_name + "_pos_cmd", 1, boost::bind(&Joint::posCmdCB, this, _1));
-    // why boost::bind gives compile errors here?
-    pos_cmd_subscriber = nh.subscribe(joint_name + "_pos_cmd", 1, &Joint::posCmdCB, this);
+    pos_cmd_subscriber = nh.subscribe(joint_name_published + "_pos_cmd", 1, &Joint::posCmdCB, this);
     // initialize kpkv service server
-    kpkv_server = nh.advertiseService(joint_name + "_kpkv_service", &Joint::kpkvCallback, this);
+    kpkv_server = nh.advertiseService(joint_name_published + "_kpkv_service", &Joint::kpkvCallback, this);
 
     // set up get_joint_state_srv_msg
     get_joint_state_srv_msg.request.joint_name = joint_name;
@@ -148,7 +158,8 @@ void Joint::kpkvSetting(double kp, double kv) {
     this -> kv = kv;
 }
 
-bool Joint::kpkvCallback(ps5_yxl1450::kpkv_msgRequest& request, ps5_yxl1450::kpkv_msgResponse& response) {
+bool Joint::kpkvCallback(two_scara_collaboration::kpkv_msgRequest& request
+    , two_scara_collaboration::kpkv_msgResponse& response) {
     ROS_INFO("kpkvCallback activated");
     kp = request.kp;
     kv = request.kv;
@@ -190,7 +201,10 @@ int main(int argc, char **argv) {
     Joint scara_right_joint2(nh, "scara_robot_right::rotation2", dt);
 
     // set kp & kv here after being tuned
-    
+    scara_left_joint1.kpkvSetting(1, 0.2);
+    scara_left_joint2.kpkvSetting(1, 0.2);
+    scara_right_joint1.kpkvSetting(1, 0.2);
+    scara_right_joint2.kpkvSetting(1, 0.2);
 
     ros::Rate rate_timer(1/dt);
     while (ros::ok()) {

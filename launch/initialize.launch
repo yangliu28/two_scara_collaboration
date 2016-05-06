@@ -49,6 +49,10 @@
   <!-- the cylinder active pool maintainer node -->
   <node name="cylinder_active_pool" pkg="two_scara_collaboration" type="cylinder_active_pool" output="screen" />
 
+  <!-- the maintainer for scara upper boundary topics -->
+  <node name="scara_upper_boundary_maintainer" pkg="two_scara_collaboration" type="scara_upper_boundary_maintainer" output="log" />
+
+
 
 
 

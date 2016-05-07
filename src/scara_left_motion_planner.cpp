@@ -20,7 +20,7 @@
     // 1.stand by position -> target cylinder position
     // 2.target cylinder hovering (for cylinder grasping operation)
     // 3.target cylinder position -> drop position
-    // 4.drop position -> stand by position (high speed)
+    // 4.drop position -> stand by position
 // only in motion step 1, the operation may be delayed when the other robot is in operation range
 
 // upper boundary control method:
@@ -42,16 +42,18 @@
 #include <gazebo_msgs/GetModelState.h>
 
 const double CYLINDER_SPEED = 0.12;  // the measured absolute speed of the cylinder
-const double SCARA_LEFT_STAND_BY_X = 0.071693;  // x coord of the stand-by position
-const double SCARA_LEFT_STAND_BY_Y = 0.590546;  // y coord of the stand-by position
-const double STEP1_DURANCE = 2.0;  // pre-defined time for step 1
-const double STEP2_DURANCE = 2.0;  // pre-defined time for step 2
+const double STEP1_DURANCE = 2.0;  // time allocation for step 1
+const double STEP2_DURANCE = 2.0;  // time allocation for step 2
+const double STEP3_DURANCE = 2.0;  // time allocation for step 3
+const double STEP4_DURANCE = 1.0;  // time allocation for step 4
 const double MOTION_SAMPLE_TIME = 0.01;
 
 const double RED_DROP_JOINT1 = 0.3;  // drop position for red cylinder
 const double RED_DROP_JOINT2 = 2.0;
-const double BLUE_DROP_JOINT1 = 0.0;  // drop position for blue cylinder
-const double BLUE_DROP_JOINT2 = 0.0;
+const double BLUE_DROP_JOINT1 = -1.9;  // drop position for blue cylinder
+const double BLUE_DROP_JOINT2 = 1.8;
+const double STAND_BY_JOINT1 = -0.78;  // stand by scara joints
+const double STAND_BY_JOINT2 = 2.1;
 
 // global variables
 std::vector<int8_t> g_current_cylinders;  // 0 or 1 represent red or blue
@@ -200,6 +202,14 @@ int main(int argc, char** argv) {
     scara_position_new.resize(2);
     std::vector<double> scara_joints_new;  // the computed new joints of scara
     scara_joints_new.resize(2);
+    std::vector<double> cylinder_drop_joints;  // cylinder drop position in scara joints
+    cylinder_drop_joints.resize(2);
+    std::vector<double> cylinder_drop_position;  // cylinder drop position
+    cylinder_drop_position.resize(2);
+    std::vector<double> stand_by_joints;  // stand by scara joints
+    stand_by_joints.resize(2);
+    std::vector<double> stand_by_position;  // stand by scara position
+    stand_by_position.resize(2);
     while (ros::ok()) {
         // motion has been divided into four parts according to the purposes
 
@@ -263,11 +273,11 @@ int main(int argc, char** argv) {
             scara_joints_new  = scara_left_inverse_kinematics(scara_position_new);
             // prepare joints command and publish them
             scara_left_r1_cmd_msg.data = scara_joints_new[0];
-            scara_left_r2_cmd_msg.data = scara_joints_new[2];
+            scara_left_r2_cmd_msg.data = scara_joints_new[1];
             scara_left_r1_cmd_publisher.publish(scara_left_r1_cmd_msg);
             scara_left_r2_cmd_publisher.publish(scara_left_r2_cmd_msg);
             // delay and update
-            ros::Duration(0.01).sleep();
+            ros::Duration(MOTION_SAMPLE_TIME).sleep();
             ros::spinOnce();
         }
         // it can be assumed now that left scara is hovering over target cylinder
@@ -287,7 +297,7 @@ int main(int argc, char** argv) {
             scara_joints_new = scara_left_inverse_kinematics(scara_position_new);
             // prepare joints command and publish them
             scara_left_r1_cmd_msg.data = scara_joints_new[0];
-            scara_left_r2_cmd_msg.data = scara_joints_new[2];
+            scara_left_r2_cmd_msg.data = scara_joints_new[1];
             scara_left_r1_cmd_publisher.publish(scara_left_r1_cmd_msg);
             scara_left_r2_cmd_publisher.publish(scara_left_r2_cmd_msg);
             // gripper actions
@@ -310,18 +320,83 @@ int main(int argc, char** argv) {
                 scara_gripper_action_client.sendGoal(scara_gripper_goal);
             }
             // delay and update
-            ros::Duration(0.01).sleep();
+            ros::Duration(MOTION_SAMPLE_TIME).sleep();
             ros::spinOnce();
         }
         // it can be assumed that left gripper has got the cylinder
 
 
         // 3.target cylinder position -> drop position
-        // update the upper boundary dynamically
+        // update the upper boundary dynamically, set in_action to false at the end
+        // calculate target position, i.e., drop position
+        if (g_current_cylinders[cylinder_index] == 0) {
+            // goes to red cylinder drop position
+            cylinder_drop_joints[0] = RED_DROP_JOINT1;
+            cylinder_drop_joints[1] = RED_DROP_JOINT2;
+            cylinder_drop_position = scara_left_kinematics(cylinder_drop_joints);
+        }
+        count = STEP3_DURANCE / MOTION_SAMPLE_TIME;
+        for (int i=0; i<count; i++) {
+            // get current scara joints and position
+            scara_joints[0] = g_scara_left_r1;
+            scara_joints[1] = g_scara_left_r2;
+            scara_position = scara_left_kinematics(scara_joints);
+            // compute new scara position
+            scara_position_new[0] = ((count-i-1)*scara_position[0] + cylinder_drop_position[0])/(count-i);
+            scara_position_new[1] = ((count-i-1)*scara_position[1] + cylinder_drop_position[1])/(count-i);
+            scara_joints_new = scara_left_inverse_kinematics(scara_position_new);
+            // prepare joints command and publish them
+            scara_left_r1_cmd_msg.data = scara_joints_new[0];
+            scara_left_r2_cmd_msg.data = scara_joints_new[1];
+            scara_left_r1_cmd_publisher.publish(scara_left_r1_cmd_msg);
+            scara_left_r2_cmd_publisher.publish(scara_left_r2_cmd_msg);
+            // update upper boundary information
+            left_boundary_change_srv.request.in_action_change = false;
+            left_boundary_change_srv.request.upper_boundary_change = true;
+                // the y position as the upper boundary
+            left_boundary_change_srv.request.upper_boundary = scara_position[1];
+            scara_left_upper_boundary_client.call(left_boundary_change_srv);  // call the service
+            // delay and update
+            ros::Duration(MOTION_SAMPLE_TIME).sleep();
+            ros::spinOnce();
+        }
+        // now it can be assumed that gripper has reached drop location
+        // set again the upper boundary inforamtion
+        left_boundary_change_srv.request.in_action_change = true;
+        left_boundary_change_srv.request.in_action = false;
+        left_boundary_change_srv.request.upper_boundary_change = false;
+        scara_left_upper_boundary_client.call(left_boundary_change_srv);  // call the service
+        // drop the cylinder operation
+        scara_gripper_goal.up_down_left = 0;
+        scara_gripper_goal.grasp_release_left = -1;
+        scara_gripper_action_client.sendGoal(scara_gripper_goal);
+        ros::Duration(0.5).sleep();  // delay for operation to finish
 
 
+        // 4.drop position -> stand by position
+        stand_by_joints[0] = STAND_BY_JOINT1;
+        stand_by_joints[1] = STAND_BY_JOINT2;
+        stand_by_position = scara_left_kinematics(stand_by_joints);
+        count = STEP4_DURANCE / MOTION_SAMPLE_TIME;
+        for (int i=0; i<count; i++) {
+            // get current scara joints and position
+            scara_joints[0] = g_scara_left_r1;
+            scara_joints[1] = g_scara_left_r2;
+            scara_position = scara_left_kinematics(scara_joints);
+            // compute new scara position
+            scara_position_new[0] = ((count-i-1)*scara_position[0] + stand_by_position[0])/(count-i);
+            scara_position_new[1] = ((count-i-1)*scara_position[1] + stand_by_position[1])/(count-i);
+            scara_joints_new = scara_left_inverse_kinematics(scara_position_new);
+            // prepare joints command and publish them
+            scara_left_r1_cmd_msg.data = scara_joints_new[0];
+            scara_left_r2_cmd_msg.data = scara_joints_new[2];
+            scara_left_r1_cmd_publisher.publish(scara_left_r1_cmd_msg);
+            scara_left_r2_cmd_publisher.publish(scara_left_r2_cmd_msg);
+            // delay and update
+            ros::Duration(MOTION_SAMPLE_TIME).sleep();
+            ros::spinOnce();
+        }
 
-        // 4.drop position -> stand by position (high speed)
 
     }
 

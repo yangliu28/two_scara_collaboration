@@ -8,7 +8,7 @@ roslaunch two_scara_collaboration initialize.launch
 ```
 Gazebo simulator is paused when initialized, in case the arms of the two scara robots appear at same location and bounce away each other. Click start button to start.
 
-Start the two independent motion planners
+Start the two independant motion planners
 ```
 rosrun two_scara_collaboration scara_left_motion_planner
 ```

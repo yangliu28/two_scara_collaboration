@@ -175,14 +175,14 @@
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <cylinder length="0.02" radius="0.005"/>
+      <box size="0.02 0.01 0.02"/>
     </geometry>
   </collision>
 
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <cylinder length="0.02" radius="0.005"/>
+      <box size="0.02 0.01 0.02"/>
     </geometry>
   </visual>
 
@@ -213,14 +213,14 @@
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <cylinder length="0.02" radius="0.005"/>
+      <box size="0.01 0.02 0.02"/>
     </geometry>
   </collision>
 
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <cylinder length="0.02" radius="0.005"/>
+      <box size="0.01 0.02 0.02"/>
     </geometry>
   </visual>
 
@@ -251,14 +251,14 @@
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <cylinder length="0.02" radius="0.005"/>
+      <box size="0.02 0.01 0.02"/>
     </geometry>
   </collision>
 
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <cylinder length="0.02" radius="0.005"/>
+      <box size="0.02 0.01 0.02"/>
     </geometry>
   </visual>
 
@@ -289,14 +289,14 @@
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <cylinder length="0.02" radius="0.005"/>
+      <box size="0.01 0.02 0.02"/>
     </geometry>
   </collision>
 
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <cylinder length="0.02" radius="0.005"/>
+      <box size="0.01 0.02 0.02"/>
     </geometry>
   </visual>
 

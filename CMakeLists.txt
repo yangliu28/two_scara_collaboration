@@ -37,6 +37,7 @@ cs_add_executable(scara_joint_controller src/scara_joint_controller.cpp)
 cs_add_executable(cylinder_active_pool src/cylinder_active_pool.cpp)
 cs_add_executable(scara_upper_boundary_maintainer src/scara_upper_boundary_maintainer.cpp)
 cs_add_executable(scara_left_motion_planner src/scara_left_motion_planner.cpp)
+cs_add_executable(scara_right_motion_planner src/scara_right_motion_planner.cpp)
 
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package

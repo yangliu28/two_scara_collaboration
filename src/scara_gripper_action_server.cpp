@@ -17,7 +17,7 @@
 // constants for joint effort and duration, values tuned
 const double GRIPPER_UP_EFFORT = 0.001;
 const double GRIPPER_DOWN_EFFORT = 0.0;
-const double GRIPPER_GRASP_EFFORT_ABS = 0.0001;  // absolute value
+const double GRIPPER_GRASP_EFFORT_ABS = 0.002;  // absolute value
 const double GRIPPER_RELEASE_EFFORT_ABS = 0.0001;  // absolute value
 const ros::Duration EFFORT_DURATION(0, 250000000);  // 0.25s, longer than loop time of 0.1s
 const double EFFORT_FREQUENCY = 1/0.1;  // this decide the reaction speed of action server

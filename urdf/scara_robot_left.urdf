@@ -177,9 +177,9 @@
 <joint name="finger1_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger1"/>
-  <origin xyz="0 -0.03 -0.23" rpy="0 0 0"/>
+  <origin xyz="0 -0.04 -0.23" rpy="0 0 0"/>
   <axis xyz="0 1 0"/>
-  <limit effort="100" velocity="100" lower="0.0" upper="0.01"/>
+  <limit effort="100" velocity="100" lower="0.0" upper="0.02"/>
 </joint>
 
 <link name="finger1">
@@ -216,9 +216,9 @@
 <joint name="finger2_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger2"/>
-  <origin xyz="0.03 0 -0.23" rpy="0 0 0"/>
+  <origin xyz="0.04 0 -0.23" rpy="0 0 0"/>
   <axis xyz="1 0 0"/>
-  <limit effort="100" velocity="100" lower="-0.01" upper="0.0"/>
+  <limit effort="100" velocity="100" lower="-0.02" upper="0.0"/>
 </joint>
 
 <link name="finger2">
@@ -254,9 +254,9 @@
 <joint name="finger3_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger3"/>
-  <origin xyz="0 0.03 -0.23" rpy="0 0 0"/>
+  <origin xyz="0 0.04 -0.23" rpy="0 0 0"/>
   <axis xyz="0 1 0"/>
-  <limit effort="100" velocity="100" lower="-0.01" upper="0.0"/>
+  <limit effort="100" velocity="100" lower="-0.02" upper="0.0"/>
 </joint>
 
 <link name="finger3">
@@ -292,9 +292,9 @@
 <joint name="finger4_joint" type="prismatic">
   <parent link="gripper_link"/>
   <child link="finger4"/>
-  <origin xyz="-0.03 0 -0.23" rpy="0 0 0"/>
+  <origin xyz="-0.04 0 -0.23" rpy="0 0 0"/>
   <axis xyz="1 0 0"/>
-  <limit effort="100" velocity="100" lower="0.0" upper="0.01"/>
+  <limit effort="100" velocity="100" lower="0.0" upper="0.02"/>
 </joint>
 
 <link name="finger4">

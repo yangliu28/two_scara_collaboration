@@ -44,7 +44,7 @@
 
 const double CYLINDER_SPEED = 0.12;  // the measured absolute speed of the cylinder
 const double STEP1_DURANCE = 2.0;  // time allocation for step 1
-const double STEP2_DURANCE = 2.0;  // time allocation for step 2
+const double STEP2_DURANCE = 4.0;  // time allocation for step 2
 const double STEP3_DURANCE = 2.0;  // time allocation for step 3
 const double STEP4_DURANCE = 1.0;  // time allocation for step 4
 const double MOTION_SAMPLE_TIME = 0.01;
@@ -95,7 +95,7 @@ std::vector<double> scara_left_inverse_kinematics(std::vector<double> position) 
     return output_joints;
 }
 
-void currentCylindersCallback(const std_msgs::Int8MultiArray& current_cylinder_msg) {
+void currentCylinderCallback(const std_msgs::Int8MultiArray& current_cylinder_msg) {
     // update current cylinder blocks
     if (!g_current_cylinders_initialized)
         g_current_cylinders_initialized = true;  // set flag to true
@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
 
     // initialize subscriber to "/current_cylinder_blocks"
     ros::Subscriber current_cylinder_subscriber = nh.subscribe("/current_cylinder_blocks"
-        , 1, currentCylindersCallback);
+        , 1, currentCylinderCallback);
     // initialize subscriber to "/cylinder_blocks_poses"
     ros::Subscriber cylinder_poses_subscriber = nh.subscribe("/cylinder_blocks_poses"
         , 1, cylinderPosesCallback);
@@ -187,8 +187,8 @@ int main(int argc, char** argv) {
     ROS_ERROR("program step 2");
 
     while (!g_current_cylinders_initialized) {
-        ROS_INFO("waiting for current cylinders initialization");
         ros::Duration(0.5).sleep();
+        ros::spinOnce();
     }
     ROS_INFO("current_cylinder_blocks initialized");
 
@@ -200,6 +200,8 @@ int main(int argc, char** argv) {
     double left_upper_boundary;
     std::vector<double> cylinder_position;  // the dynamic cylinder position
     cylinder_position.resize(2);
+    std::vector<double> cylinder_joints;  // the dynamic scara joints of cylinder
+    cylinder_joints.resize(2);
     std::vector<double> scara_joints;  // the dynamic scara joints position
     scara_joints.resize(2);
     std::vector<double> scara_position;  // the dynamic position of scara
@@ -269,19 +271,12 @@ int main(int argc, char** argv) {
         count = STEP1_DURANCE / MOTION_SAMPLE_TIME;
         for (int i=0; i<count; i++) {
             // in each step, always heading to the updated cylinder position
-            // get current cylinder and scara joints positions
-            scara_joints[0] = g_scara_left_r1;
-            scara_joints[1] = g_scara_left_r2;
-            scara_position = scara_left_kinematics(scara_joints);
             cylinder_position[0] = g_cylinder_x[cylinder_index];
             cylinder_position[1] = g_cylinder_y[cylinder_index];
-            // compute new scara position based on current scara position and cylinder position
-            scara_position_new[0] = ((count-i-1)*scara_position[0] + cylinder_position[0])/(count-i);
-            scara_position_new[1] = ((count-i-1)*scara_position[1] + cylinder_position[1])/(count-i);
-            scara_joints_new  = scara_left_inverse_kinematics(scara_position_new);
+            cylinder_joints = scara_left_inverse_kinematics(cylinder_position);
             // prepare joints command and publish them
-            scara_left_r1_cmd_msg.data = scara_joints_new[0];
-            scara_left_r2_cmd_msg.data = scara_joints_new[1];
+            scara_left_r1_cmd_msg.data = cylinder_joints[0];
+            scara_left_r2_cmd_msg.data = cylinder_joints[1];
             scara_left_r1_cmd_publisher.publish(scara_left_r1_cmd_msg);
             scara_left_r2_cmd_publisher.publish(scara_left_r2_cmd_msg);
             // delay and update
@@ -301,7 +296,7 @@ int main(int argc, char** argv) {
         count = STEP2_DURANCE / MOTION_SAMPLE_TIME; // reuse count
         for (int i=0; i<count; i++) {
             // get current cylinder position, scara position not needed
-            scara_position_new[0] = g_cylinder_x[cylinder_index];
+            scara_position_new[0] = g_cylinder_x[cylinder_index] - 0.03;
             scara_position_new[1] = g_cylinder_y[cylinder_index];
             scara_joints_new = scara_left_inverse_kinematics(scara_position_new);
             // prepare joints command and publish them
@@ -310,20 +305,20 @@ int main(int argc, char** argv) {
             scara_left_r1_cmd_publisher.publish(scara_left_r1_cmd_msg);
             scara_left_r2_cmd_publisher.publish(scara_left_r2_cmd_msg);
             // gripper actions
-            if (i == 50) {
-                // at 0.5 second, let gripper go down
+            if (i == 100) {
+                // at 1.0 second, let gripper go down
                 scara_gripper_goal.up_down_left = 1;
                 scara_gripper_goal.grasp_release_left = 0;
                 scara_gripper_action_client.sendGoal(scara_gripper_goal);
             }
-            else if (i == 100) {
-                // at 1.0 second, let the gripper grasp
+            else if (i == 200) {
+                // at 2.0 second, let the gripper grasp
                 scara_gripper_goal.up_down_left = 0;
                 scara_gripper_goal.grasp_release_left = 1;
                 scara_gripper_action_client.sendGoal(scara_gripper_goal);
             }
-            else if (i == 150) {
-                // at 1.5 second, let the gripper lift up
+            else if (i == 300) {
+                // at 3.0 second, let the gripper lift up
                 scara_gripper_goal.up_down_left = -1;
                 scara_gripper_goal.grasp_release_left = 0;
                 scara_gripper_action_client.sendGoal(scara_gripper_goal);
@@ -345,6 +340,14 @@ int main(int argc, char** argv) {
             cylinder_drop_joints[1] = RED_DROP_JOINT2;
             cylinder_drop_position = scara_left_kinematics(cylinder_drop_joints);
         }
+        else {
+            // goes to blue cylinder drop position
+            cylinder_drop_joints[0] = BLUE_DROP_JOINT1;
+            cylinder_drop_joints[1] = BLUE_DROP_JOINT2;
+            cylinder_drop_position = scara_left_kinematics(cylinder_drop_joints);
+        }
+        ROS_INFO_STREAM("drop position: " << cylinder_drop_position[0] << ", " << cylinder_drop_position[1]);
+        ROS_INFO_STREAM("drop joints: " << cylinder_drop_joints[0] << ", " << cylinder_drop_joints[1]);
         count = STEP3_DURANCE / MOTION_SAMPLE_TIME;
         for (int i=0; i<count; i++) {
             // get current scara joints and position
@@ -352,8 +355,11 @@ int main(int argc, char** argv) {
             scara_joints[1] = g_scara_left_r2;
             scara_position = scara_left_kinematics(scara_joints);
             // compute new scara position
-            scara_position_new[0] = ((count-i-1)*scara_position[0] + cylinder_drop_position[0])/(count-i);
-            scara_position_new[1] = ((count-i-1)*scara_position[1] + cylinder_drop_position[1])/(count-i);
+            // scara_position_new[0] = ((count-i-1)*scara_position[0] + cylinder_drop_position[0])/(count-i);
+            // scara_position_new[1] = ((count-i-1)*scara_position[1] + cylinder_drop_position[1])/(count-i);
+            // scara_joints_new = scara_left_inverse_kinematics(scara_position_new);
+            scara_position_new[0] = cylinder_drop_position[0];
+            scara_position_new[1] = cylinder_drop_position[1];
             scara_joints_new = scara_left_inverse_kinematics(scara_position_new);
             // prepare joints command and publish them
             scara_left_r1_cmd_msg.data = scara_joints_new[0];
@@ -388,26 +394,23 @@ int main(int argc, char** argv) {
         stand_by_joints[0] = STAND_BY_JOINT1;
         stand_by_joints[1] = STAND_BY_JOINT2;
         stand_by_position = scara_left_kinematics(stand_by_joints);
+        ROS_INFO_STREAM("stand by position: " << stand_by_position[0] << ", " << stand_by_position[1]);
+        ROS_INFO_STREAM("stand by joints: " << stand_by_joints[0] << ", " << stand_by_joints[1]);
         count = STEP4_DURANCE / MOTION_SAMPLE_TIME;
         for (int i=0; i<count; i++) {
             // get current scara joints and position
             scara_joints[0] = g_scara_left_r1;
             scara_joints[1] = g_scara_left_r2;
             scara_position = scara_left_kinematics(scara_joints);
-            // compute new scara position
-            scara_position_new[0] = ((count-i-1)*scara_position[0] + stand_by_position[0])/(count-i);
-            scara_position_new[1] = ((count-i-1)*scara_position[1] + stand_by_position[1])/(count-i);
-            scara_joints_new = scara_left_inverse_kinematics(scara_position_new);
             // prepare joints command and publish them
-            scara_left_r1_cmd_msg.data = scara_joints_new[0];
-            scara_left_r2_cmd_msg.data = scara_joints_new[2];
+            scara_left_r1_cmd_msg.data = stand_by_joints[0];
+            scara_left_r2_cmd_msg.data = stand_by_joints[1];
             scara_left_r1_cmd_publisher.publish(scara_left_r1_cmd_msg);
             scara_left_r2_cmd_publisher.publish(scara_left_r2_cmd_msg);
             // delay and update
             ros::Duration(MOTION_SAMPLE_TIME).sleep();
             ros::spinOnce();
         }
-
 
     }
 

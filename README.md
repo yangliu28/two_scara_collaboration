@@ -18,9 +18,11 @@ rosrun two_scara_collaboration scara_right_motion_planner
 
 
 ## Progress (May 7, 2016)
-Switch the joint control method from using ros_control package to self-defined PD controller.
+Switch the joint control method from off-the-shelf ros_control package to self-defined PD controller.
 
 Collision avoidance using a further simplified algorithm to dynamically allocate each robot's workspace. Task distribution follows a first come, first get principle. One important thing is that, the motion planners are independant. One planner for one SCARA robot. And they are pretty robust observed from the video.
+
+Some parameters, like time and exerted force or torque can be further tuned, to get better motion performance.
 
 
 ## Progress and problems (May 3, 2016)

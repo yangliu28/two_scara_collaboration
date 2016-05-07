@@ -5,6 +5,8 @@
 
 // ros communication:
     // subscribe to topic "/cylinder_blocks_poses"
+    // subscribe to topic "/scara_robot_left_rotation1_pos"
+    // subscribe to topic "/scara_robot_left_rotation2_pos"
     // publish to topic "/scara_robot_left_rotation1_pos_cmd"
     // publish to topic "/scara_robot_left_rotation2_pos_cmd"
     // subscribe to topic "/cylinder_active_pool"
@@ -37,12 +39,19 @@
 #include <two_scara_collaboration/scara_gripperAction.h>
 #include <gazebo_msgs/GetModelState.h>
 
-// the measured absolute speed of the cylinder
-const double CYLINDER_SPEED = 1.2;  // the cylinder is moving along -x direction
+const double CYLINDER_SPEED = 0.12;  // the measured absolute speed of the cylinder
+const double SCARA_WORK_SPEED = 0.8;  // should be faster than cylinder
+const double SCARA_HIGH_SPEED = 1.2;  // when moving back to stand by position
+const double SCARA_LEFT_STAND_BY_X = 0.071693;  // x coord of the stand-by position
+const double SCARA_LEFT_STAND_BY_Y = 0.590546;  // y coord of the stand-by position
+const double STEP1_DURANCE = 2.0;  // pre-defined time for step 1
+const double STEP2_DURANCE = 2.0;  // pre-defined time for step 2
 
 // global variables
 std::vector<double> g_cylinder_x;  // only x y coordinates matter
 std::vector<double> g_cylinder_y;
+double g_scara_left_r1;  // the two joints of scara
+double g_scara_left_r2;
 std::vector<int> g_cylinder_pool;  // the active pool
 bool g_right_in_action;  // upper boundary status of right scara
 double g_right_upper_boundary;
@@ -84,6 +93,16 @@ void cylinderPosesCallback(const two_scara_collaboration::cylinder_blocks_poses&
     g_cylinder_y = cylinder_poses_msg.y;
 }
 
+void scaraLeftR1PosCallback(const std_msgs::Float64& rotation1_msg) {
+    // update first joint angle of left scara robot
+    g_scara_left_r1 = rotation1_msg.data;
+}
+
+void scaraLeftR2PosCallback(const std_msgs::Float64& rotation2_msg) {
+    // update second joint angle of left scara robot
+    g_scara_left_r2 = rotation2_msg.data;
+}
+
 void cylinderPoolCallback(const std_msgs::Int8MultiArray& cylinder_pool_msg) {
     // update the cylinder active pool
     int pool_size = cylinder_pool_msg.data.size();
@@ -106,6 +125,12 @@ int main(int argc, char** argv) {
     // initialize subscriber to "/cylinder_blocks_poses"
     ros::Subscriber cylinder_poses_subscriber = nh.subscribe("/cylinder_blocks_poses"
         , 1, cylinderPosesCallback);
+    // initialize subscriber to "/scara_robot_left_rotation1_pos"
+    ros::Subscriber scara_left_r1_pos_subscriber = nh.subscribe("/scara_robot_left_rotation1_pos"
+        , 1, scaraLeftR1PosCallback);
+    // initialize subscriber to "/scara_robot_left_rotation2_pos"
+    ros::Subscriber scara_left_r2_pos_subscriber = nh.subscribe("/scara_robot_left_rotation2_pos"
+        , 1, scaraLeftR2PosCallback);
     // publish to topic "/scara_robot_left_rotation1_pos_cmd"
     ros::Publisher scara_left_r1_cmd_publisher
         = nh.advertise<std_msgs::Float64>("/scara_robot_left_rotation1_pos_cmd", 1);
@@ -143,16 +168,29 @@ int main(int argc, char** argv) {
     ROS_INFO("gazebo is ready");
 
     // the motion planner loop
+    int count;  // the motion count
+    int cylinder_index;
+    bool left_in_action = false;  // left scara boundary status
+    double left_upper_boundary;
+    std::vector<double> cylinder_position;  // the dynamic cylinder position
+    cylinder_position.resize(2);
+    std::vector<double> scara_joints;  // the dynamic scara joints position
+    scara_joints.resize(2);
+    std::vector<double> scara_position;  // the dynamic position of scara
+    scara_position.resize(2);
+    std::vector<double> scara_position_new;  // the computed new position of scara
+    scara_position_new.resize(2);
+    std::vector<double> scara_joints_new;  // the computed new joints of scara
+    scara_joints_new.resize(2);
     while (ros::ok()) {
         // motion has been divided into four parts according to the purposes
-        // 2.target cylinder hovering (for cylinder grasping operation)
+
         // 3.target cylinder position -> drop position
         // 4.drop position -> stand by position (high speed)
 
         // 1.stand by position -> target cylinder position
         // claim cylinders from cylinder active pool
         bool cylinder_claimed = false;
-        int cylinder_index;
         while (!cylinder_claimed) {
             // cylinder not claimed
             for (int i=0; i<g_cylinder_pool.size(); i++) {
@@ -173,8 +211,6 @@ int main(int argc, char** argv) {
         }
         ROS_INFO_STREAM("cylinder claimed by left scara: " << cylinder_index);
         // check upper boundary status of right scara
-        bool left_in_action = false;
-        double left_upper_boundary;
         if (g_right_in_action) {
             // right scara is in action, check boundary value for intersection
             // if left_boundary-right_boundary < 0.142, then there is intersection
@@ -196,12 +232,45 @@ int main(int argc, char** argv) {
             ROS_INFO_STREAM("left scara upper boundary updated in step 1");
         else
             ROS_INFO_STREAM("left scara upper boundary not update in step 1");
-        
-        // calculate target cylinder position
-        std::vector<double> cylinder_position;
-        cylinder_position.resize(2);
-        cylinder_position[0] = g_cylinder_x[cylinder_index];
-        cylinder_position[1] = g_cylinder_y[cylinder_index];
+        // sample time of motion contorl at 0.01 second
+        count = STEP1_DURANCE/0.01;
+        for (int i=0; i<count; i++) {
+            // in each step, always heading to the updated cylinder position
+            // get current cylinder and scara joints positions
+            scara_joints[0] = g_scara_left_r1;
+            scara_joints[1] = g_scara_left_r2;
+            scara_position = scara_left_kinematics(scara_joints);
+            cylinder_position[0] = g_cylinder_x[cylinder_index];
+            cylinder_position[1] = g_cylinder_y[cylinder_index];
+            // compute new scara position based on current scara position and cylinder position
+            scara_position_new[0] = ((count-i-1)*scara_position[0] + cylinder_position[0])/(count-i);
+            scara_position_new[1] = ((count-i-1)*scara_position[1] + cylinder_position[1])/(count-i);
+            scara_joint_new  = scara_left_inverse_kinematics(scara_position_new);
+            // prepare joints command and publish them
+            scara_left_r1_cmd_msg.data = scara_joint_new[0];
+            scara_left_r2_cmd_msg.data = scara_joint_new[2];
+            scara_left_r1_cmd_publisher.publish(scara_left_r1_cmd_msg);
+            scara_left_r2_cmd_publisher.publish(scara_left_r2_cmd_msg);
+            // delay and update
+            ros::Duration(0.01).sleep();
+            ros::spinOnce();
+        }
+        // it can be assumed now that left scara is hovering over target cylinder
+
+
+        // 2.target cylinder hovering (for cylinder grasping operation)
+        // define durance for this step is 2 second, the grasping behaviros hasspens at
+            // 0.5 second: lower the gripper
+            // 1.0 second: grasp the cylinder
+            // 1.5 second: lift the gripper
+        // for cylinder hovering, always command target position at the cylinder
+        count = STEP_DURANCE/0.01; // reuse count
+        for (int i=0; i<count; i++) {
+            // get current cylinder position, scara position not needed
+
+        }
+
+
 
 
 

@@ -8,6 +8,21 @@ roslaunch two_scara_collaboration initialize.launch
 ```
 Gazebo simulator is paused when initialized, in case the arms of the two scara robots appear at same location and bounce away each other. Click start button to start.
 
+Start the two independent motion planners
+```
+rosrun two_scara_collaboration scara_left_motion_planner
+```
+```
+rosrun two_scara_collaboration scara_right_motion_planner
+```
+
+
+## Progress (May 7, 2016)
+Switch the joint control method from using ros_control package to self-defined PD controller.
+
+Collision avoidance using a further simplified algorithm to dynamically allocate each robot's workspace. Task distribution follows a first come, first get principle. One important thing is that, the motion planners are independant. One planner for one SCARA robot. And they are pretty robust observed from the video.
+
+
 ## Progress and problems (May 3, 2016)
 The scara robots, conveyor belt and cylinder blocks were modeled in urdf.
 

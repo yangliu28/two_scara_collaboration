@@ -32,14 +32,15 @@
 
 #include <ros/ros.h>
 #include <math.h>
-#include <std_msgs::Int8MultiArray.h>
+#include <std_msgs/Int8MultiArray.h>
+#include <std_msgs/Float64.h>
 #include <two_scara_collaboration/cylinder_blocks_poses.h>
+#include <two_scara_collaboration/pool_claim_msg.h>
 #include <std_msgs/Int8MultiArray.h>
 #include <two_scara_collaboration/scara_upper_boundary.h>
 #include <two_scara_collaboration/upper_boundary_change.h>
 #include <actionlib/client/simple_action_client.h>
 #include <two_scara_collaboration/scara_gripperAction.h>
-#include <gazebo_msgs/GetModelState.h>
 
 const double CYLINDER_SPEED = 0.12;  // the measured absolute speed of the cylinder
 const double STEP1_DURANCE = 2.0;  // time allocation for step 1
@@ -57,11 +58,12 @@ const double STAND_BY_JOINT2 = 2.1;
 
 // global variables
 std::vector<int8_t> g_current_cylinders;  // 0 or 1 represent red or blue
+bool g_current_cylinders_initialized = false;
 std::vector<double> g_cylinder_x;  // only x y coordinates matter
 std::vector<double> g_cylinder_y;
 double g_scara_left_r1;  // the two joints of scara
 double g_scara_left_r2;
-std::vector<int> g_cylinder_pool;  // the active pool
+std::vector<int8_t> g_cylinder_pool;  // the active pool
 bool g_right_in_action;  // upper boundary status of right scara
 double g_right_upper_boundary;
 
@@ -95,6 +97,8 @@ std::vector<double> scara_left_inverse_kinematics(std::vector<double> position) 
 
 void currentCylindersCallback(const std_msgs::Int8MultiArray& current_cylinder_msg) {
     // update current cylinder blocks
+    if (!g_current_cylinders_initialized)
+        g_current_cylinders_initialized = true;  // set flag to true
     g_current_cylinders.resize(current_cylinder_msg.data.size());
     g_current_cylinders = current_cylinder_msg.data;
 }
@@ -137,6 +141,8 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "scara_left_motion_planner");
     ros::NodeHandle nh;
 
+    ROS_ERROR("program step 1");
+
     // initialize subscriber to "/current_cylinder_blocks"
     ros::Subscriber current_cylinder_subscriber = nh.subscribe("/current_cylinder_blocks"
         , 1, currentCylindersCallback);
@@ -162,7 +168,7 @@ int main(int argc, char** argv) {
         , 1, cylinderPoolCallback);
     // service client to service "/cylinder_pool_claim"
     ros::ServiceClient cylinder_pool_claim_client
-        = nh.serviceClient<two_scara_collaboration::pool_claim_msg>("cylinder_pool_claim");
+        = nh.serviceClient<two_scara_collaboration::pool_claim_msg>("/cylinder_pool_claim");
     two_scara_collaboration::pool_claim_msg cylinder_claim_srv_msg;
     // subscribe to topic "/scara_right_upper_boundary"
     ros::Subscriber scara_right_upper_boundary_subscriber
@@ -178,14 +184,14 @@ int main(int argc, char** argv) {
     scara_gripper_goal.up_down_right = 0;
     scara_gripper_goal.grasp_release_right = 0;
 
-    // use "/gazebo/get_model_state" only to check if Gazebo is up and running
-    bool gazebo_ready = false;
-    while (!gazebo_ready) {
-        gazebo_ready = ros::service::exists("/gazebo/get_model_state", true);
-        ROS_INFO("waiting for gazebo to start");
+    ROS_ERROR("program step 2");
+
+    while (!g_current_cylinders_initialized) {
+        ROS_INFO("waiting for current cylinders initialization");
         ros::Duration(0.5).sleep();
     }
-    ROS_INFO("gazebo is ready");
+    ROS_INFO("current_cylinder_blocks initialized");
+
 
     // the motion planner loop
     int count;  // the motion count
@@ -212,6 +218,8 @@ int main(int argc, char** argv) {
     stand_by_position.resize(2);
     while (ros::ok()) {
         // motion has been divided into four parts according to the purposes
+
+        ROS_ERROR("program motion 1 start");
 
         // 1.stand by position -> target cylinder position
         // claim cylinders from cylinder active pool
@@ -282,6 +290,7 @@ int main(int argc, char** argv) {
         }
         // it can be assumed now that left scara is hovering over target cylinder
 
+        ROS_ERROR("program motion 2 start");
 
         // 2.target cylinder hovering (for cylinder grasping operation)
         // define durance for this step is 2 second, the grasping behaviros hasspens at
@@ -325,6 +334,7 @@ int main(int argc, char** argv) {
         }
         // it can be assumed that left gripper has got the cylinder
 
+        ROS_ERROR("program motion 3 start");
 
         // 3.target cylinder position -> drop position
         // update the upper boundary dynamically, set in_action to false at the end
@@ -372,6 +382,7 @@ int main(int argc, char** argv) {
         scara_gripper_action_client.sendGoal(scara_gripper_goal);
         ros::Duration(0.5).sleep();  // delay for operation to finish
 
+        ROS_ERROR("program motion 4 start");
 
         // 4.drop position -> stand by position
         stand_by_joints[0] = STAND_BY_JOINT1;

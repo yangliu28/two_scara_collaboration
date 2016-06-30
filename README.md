@@ -2,6 +2,8 @@
 
 Simulation of two SCARA robots collaboratively sorting items from a conveyor belt with collision avoidance and task distribution.
 
+Check the video demonstration here: [https://youtu.be/I47J0p1j1zU](https://youtu.be/I47J0p1j1zU)
+
 ## Test command
 ```
 roslaunch two_scara_collaboration initialize.launch
